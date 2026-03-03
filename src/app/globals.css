@@ -1,26 +1,820 @@
-@import "tailwindcss";
-
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg:          #0C0C0E;
+  --surface:     #18181B;
+  --surface2:    #27272A;
+  --border:      #3F3F46;
+  --text:        #FAFAFA;
+  --text-muted:  #A1A1AA;
+  --accent:      #06B6D4;
+  --accent-dim:  rgba(6, 182, 212, 0.15);
+  --open:        #F59E0B;
+  --open-dim:    rgba(245, 158, 11, 0.15);
+  --confirmed:   #22C55E;
+  --match:       #818CF8;
+  --match-dim:   rgba(129, 140, 248, 0.15);
+  --class:       #F472B6;
+  --class-dim:   rgba(244, 114, 182, 0.15);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+* { box-sizing: border-box; }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== Page shell ===== */
+.klimt-bg {
+  min-height: 100vh;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== Header ===== */
+.klimt-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.klimt-header-inner {
+  max-width: 32rem;
+  margin: 0 auto;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.klimt-logo {
+  width: 3rem;
+  height: 3rem;
+  flex-shrink: 0;
+}
+
+.klimt-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--text);
+}
+
+.klimt-divider {
+  display: none;
+}
+
+/* ===== Main content ===== */
+.klimt-main {
+  flex: 1;
+  width: 100%;
+  max-width: 32rem;
+  margin: 0 auto;
+  padding: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* ===== Controls row ===== */
+.klimt-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem;
+}
+
+.klimt-controls-left {
+  display: flex;
+  gap: 1rem;
+}
+
+.klimt-btn-select {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--accent);
+  cursor: pointer;
+  transition: color 0.15s;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.klimt-btn-select:disabled {
+  color: var(--text-muted);
+  cursor: default;
+}
+
+.klimt-btn-clear {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.15s;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.klimt-btn-clear:disabled {
+  color: var(--border);
+  cursor: default;
+}
+
+/* ===== Filter button & dropdown ===== */
+.klimt-filter-wrapper {
+  position: relative;
+}
+
+.klimt-filter-toggle {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: border-color 0.1s, color 0.1s;
+}
+
+.klimt-filter-toggle:hover {
+  border-color: #52525B;
+  color: var(--text);
+}
+
+.klimt-filter-dropdown {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 0.5rem;
+  z-index: 50;
+  width: 18rem;
+}
+
+/* ===== Filter panel ===== */
+.klimt-filter-panel {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.klimt-filter-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.klimt-filter-level-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.klimt-filter-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.klimt-filter-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.klimt-filter-checkbox-label {
+  font-size: 0.875rem;
+  color: var(--text);
+}
+
+.klimt-filter-venue-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 0.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.klimt-filter-venue-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.klimt-filter-venue-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.klimt-filter-venue-action {
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--accent);
+}
+
+.klimt-filter-venue-action--inactive {
+  color: var(--text-muted);
+}
+
+/* ===== Input ===== */
+.klimt-input {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 0.875rem;
+  padding: 7px 10px;
+  transition: border-color 0.1s, box-shadow 0.1s;
+}
+
+.klimt-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+.klimt-input option {
+  background: var(--surface2);
+}
+
+/* ===== Checkbox ===== */
+.klimt-checkbox {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s;
+}
+
+.klimt-checkbox:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 10 10' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.5 5l2.5 2.5 4.5-4.5' stroke='%23000' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-size: 10px;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* ===== Day picker ===== */
+.klimt-day-scroller {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 0 1rem 0.25rem;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.klimt-day-scroller::-webkit-scrollbar { display: none; }
+
+.klimt-day {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 44px;
+  padding: 6px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: border-color 0.1s, color 0.1s, background 0.1s;
+  flex-shrink: 0;
+}
+
+.klimt-day:hover {
+  border-color: #52525B;
+  color: var(--text);
+}
+
+.klimt-day-selected {
+  background: var(--accent-dim) !important;
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+}
+
+.klimt-day-label {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.klimt-day-num {
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+/* ===== Cards ===== */
+.klimt-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: border-color 0.15s;
+  position: relative;
+  padding: 0.75rem 1rem 0.75rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.klimt-card:hover {
+  border-color: #52525B;
+}
+
+.klimt-card::before {
+  content: "";
+  position: absolute;
+  inset: 12px auto 12px 0;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: var(--accent);
+}
+
+.klimt-card-alt::before {
+  background: var(--match);
+}
+
+.klimt-card-body {
+  display: flex;
+  gap: 0;
+  justify-content: space-evenly;
+}
+
+.klimt-card-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+}
+
+.klimt-card-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+}
+
+.klimt-card-time {
+  font-size: 1.125rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  color: var(--text);
+}
+
+.klimt-card-venue {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.klimt-card-badges {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.klimt-card-duration {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.klimt-card-players {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border-left: 1px solid var(--border);
+  padding-left: 2rem;
+  width: 100%;
+}
+
+.klimt-card-player {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.klimt-card-player-name {
+  font-size: 0.825rem;
+  color: var(--text);
+}
+
+.klimt-card-player-name--open {
+  font-size: 0.825rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ===== Badges ===== */
+.klimt-badge-match {
+  display: inline-flex;
+  align-items: center;
+  background: var(--match-dim);
+  color: var(--match);
+  border: 1px solid var(--match);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.klimt-badge-class {
+  display: inline-flex;
+  align-items: center;
+  background: var(--class-dim);
+  color: var(--class);
+  border: 1px solid var(--class);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.klimt-badge-level {
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.klimt-badge-category {
+  display: inline-flex;
+  align-items: center;
+  background: var(--surface2);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+/* ===== CTA Button ===== */
+.klimt-cta {
+  display: block;
+  background: var(--accent);
+  color: #000;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  border-radius: 8px;
+  padding: 5px;
+  text-align: center;
+  text-decoration: none;
+  transition: opacity 0.15s, transform 0.15s;
+  border: none;
+  cursor: pointer;
+}
+
+.klimt-cta:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* ===== Dots ===== */
+.klimt-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.klimt-dot-confirmed {
+  background: var(--confirmed);
+}
+
+.klimt-dot-open {
+  background: transparent;
+  border: 1.5px solid var(--open);
+}
+
+/* ===== Match list ===== */
+.klimt-match-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0 1rem;
+}
+
+.klimt-match-wrapper {
+  flex: 1;
+}
+
+/* ===== Loading state ===== */
+.klimt-spinner {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2.5px solid var(--border);
+  border-top-color: var(--accent);
+  animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.klimt-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4rem 0;
+  gap: 0.75rem;
+}
+
+.klimt-loading-text {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+/* ===== Empty state ===== */
+.klimt-empty {
+  text-align: center;
+  padding: 4rem 1rem;
+}
+
+.klimt-empty-icons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  align-items: center;
+}
+
+.klimt-empty-icon--accent {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.5;
+}
+
+.klimt-empty-icon--match {
+  width: 1.5rem;
+  height: 1.5rem;
+  background: var(--match);
+  opacity: 0.5;
+}
+
+.klimt-empty-triangle {
+  width: 0;
+  height: 0;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-bottom: 20px solid var(--open);
+  opacity: 0.5;
+}
+
+.klimt-empty-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.klimt-empty-subtitle {
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  color: var(--text-muted);
+}
+
+/* ===== Floating action button ===== */
+.klimt-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 40;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(6, 182, 212, 0.4);
+  flex-shrink: 0;
+}
+
+/* ===== Footer ===== */
+.klimt-footer {
+  max-width: 32rem;
+  margin: 1rem auto 0;
+  padding: 2rem 1rem;
+}
+
+.klimt-footer-row {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.klimt-footer-link {
+  color: var(--text-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s;
+}
+
+.klimt-footer-link:hover {
+  color: var(--text);
+}
+
+/* ===== Modal ===== */
+.klimt-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.klimt-modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  width: 100%;
+  max-width: 448px;
+  margin: 0 16px;
+  position: relative;
+}
+
+.klimt-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  line-height: 1;
+  font-size: 1.25rem;
+}
+
+.klimt-modal-title {
+  color: var(--text);
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  padding-right: 32px;
+}
+
+.klimt-modal-description {
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+.klimt-modal-example {
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 12px;
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: pre;
+  overflow-x: auto;
+  margin-bottom: 16px;
+}
+
+.klimt-modal-textarea {
+  width: 100%;
+  resize: vertical;
+  margin-bottom: 12px;
+}
+
+.klimt-modal-error {
+  color: #F87171;
+  font-size: 0.8125rem;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background: rgba(248, 113, 113, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(248, 113, 113, 0.25);
+}
+
+.klimt-modal-submit {
+  width: 100%;
+}
+
+/* ===== Privacy page ===== */
+.klimt-privacy {
+  max-width: 32rem;
+  margin: 0 auto;
+  padding: 2.5rem 1rem;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.klimt-privacy-back {
+  font-size: 0.875rem;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  color: var(--text-muted);
+}
+
+.klimt-privacy-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.klimt-privacy-date {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.klimt-privacy-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.klimt-privacy-heading {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.klimt-privacy-text {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.klimt-privacy-text strong {
+  color: var(--text);
+}
+
+.klimt-privacy-text a {
+  color: var(--accent);
+}
+
+.klimt-privacy-list {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  list-style-type: disc;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.klimt-privacy-note {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
 }
