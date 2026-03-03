@@ -43,6 +43,7 @@ export default function MatchCard({ match, isAlt = false }: MatchCardProps) {
     minute: "2-digit",
     hour12: false,
   });
+  const dayStr = time.toLocaleDateString("en-US", { weekday: "short", day: "numeric" });
 
   const seenSlots = new Set<number>();
   const players = [...match.match_players]
@@ -65,6 +66,7 @@ export default function MatchCard({ match, isAlt = false }: MatchCardProps) {
       <div className="klimt-card-body">
         <div className="klimt-card-info">
           <div className="klimt-card-row">
+            <span className="klimt-card-day">{dayStr}</span>
             <span className="klimt-card-time">{timeStr}</span>
             <span className="klimt-card-venue">{clubName}</span>
           </div>

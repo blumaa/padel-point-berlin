@@ -8,6 +8,12 @@ import { PadelPointBerlin } from "@/app/stage/PadelPointBerlin";
 import Footer from "@/components/Footer";
 import AddMatchModal from "@/components/AddMatchModal";
 
+const TIME_SLOTS = {
+  morning:   { start: 6,  end: 11 },
+  afternoon: { start: 12, end: 16 },
+  evening:   { start: 17, end: 23 },
+} as const;
+
 function allDates(): string[] {
   return Array.from({ length: 14 }, (_, i) => {
     const d = new Date();
@@ -67,26 +73,9 @@ export default function Dashboard() {
   }, [filters, availableVenues.length]);
 
   const fetchMatches = useCallback(async () => {
-    if (selectedDates.length === 0 || filters.venues.length === 0 || filters.timeOfDay.length === 0) {
-      setMatches([]);
-      setIsLoading(false);
-      return;
-    }
     setIsLoading(true);
-    const params = new URLSearchParams();
-    params.set("dates", selectedDates.join(","));
-    if (filters.levelMin) params.set("levelMin", filters.levelMin);
-    if (filters.levelMax) params.set("levelMax", filters.levelMax);
-    if (filters.venues.length < availableVenues.length) {
-      params.set("venues", filters.venues.join(","));
-    }
-    if (filters.timeOfDay.length < 3) {
-      params.set("timeOfDay", filters.timeOfDay.join(","));
-    }
-    if (filters.category) params.set("category", filters.category);
-
     try {
-      const res = await fetch(`/api/matches?${params}`);
+      const res = await fetch("/api/matches");
       const data = await res.json();
       setMatches(Array.isArray(data) ? data : []);
     } catch {
@@ -94,13 +83,38 @@ export default function Dashboard() {
     } finally {
       setIsLoading(false);
     }
-  }, [selectedDates, filters, availableVenues.length]);
+  }, []);
 
   useEffect(() => { fetchMatches(); }, [fetchMatches]);
-  useEffect(() => {
-    const t = setInterval(fetchMatches, 60_000);
-    return () => clearInterval(t);
-  }, [fetchMatches]);
+
+  const filteredMatches = useMemo(() => {
+    if (selectedDates.length === 0 || filters.timeOfDay.length === 0) return [];
+    if (availableVenues.length > 0 && filters.venues.length === 0) return [];
+
+    return matches.filter((match) => {
+      const t = new Date(match.match_time);
+      const dateStr = t.toISOString().split("T")[0];
+      if (!selectedDates.includes(dateStr)) return false;
+
+      const hour = t.getHours();
+      const inSlot = filters.timeOfDay.some((slot) => {
+        const s = TIME_SLOTS[slot as keyof typeof TIME_SLOTS];
+        return s && hour >= s.start && hour <= s.end;
+      });
+      if (!inSlot) return false;
+
+      if (filters.levelMin && match.level_min != null && match.level_min < Number(filters.levelMin)) return false;
+      if (filters.levelMax && match.level_max != null && match.level_max > Number(filters.levelMax)) return false;
+
+      if (availableVenues.length > 0 && filters.venues.length < availableVenues.length) {
+        if (!filters.venues.includes(match.venue)) return false;
+      }
+
+      if (filters.category && match.category !== filters.category) return false;
+
+      return true;
+    });
+  }, [matches, selectedDates, filters, availableVenues]);
 
   const allSelected = dates14.every((d) => selectedDates.includes(d));
 
@@ -157,7 +171,7 @@ export default function Dashboard() {
         <DayPicker selectedDates={selectedDates} onToggle={toggleDate} />
 
         <div className="klimt-match-wrapper">
-          <MatchList matches={matches} isLoading={isLoading} />
+          <MatchList matches={filteredMatches} isLoading={isLoading} />
         </div>
         <Footer />
       </main>

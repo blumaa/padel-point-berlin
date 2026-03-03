@@ -386,6 +386,14 @@ body {
   gap: 0.1rem;
 }
 
+.klimt-card-day {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 .klimt-card-time {
   font-size: 1.125rem;
   font-weight: 700;
