@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import DayPicker from "@/components/DayPicker";
 import MatchFilters, { defaultFilters, CATEGORIES, type FilterState } from "@/components/MatchFilters";
 import MatchList from "@/components/MatchList";
-import { PadelPointBerlin } from "@/app/stage/PadelPointBerlin";
+import { PadelPointBerlin } from "@/components/PadelPointBerlin";
 import LogoOverlay from "@/components/LogoOverlay";
 import Footer from "@/components/Footer";
 import AddMatchModal from "@/components/AddMatchModal";
@@ -169,15 +169,16 @@ export default function Dashboard() {
       )}
 
       <main className="klimt-main" id="main-content">
+        <div className="klimt-sticky-zone">
         <div className="klimt-controls">
           <div className="klimt-controls-left">
             <div className="klimt-filter-wrapper" ref={filterRef}>
               <button
                 onClick={() => setIsFiltersOpen((v) => !v)}
-                className="klimt-filter-toggle"
+                className={`klimt-filter-toggle${activeFilterCount > 0 ? " klimt-filter-toggle--active" : ""}`}
                 aria-expanded={isFiltersOpen}
               >
-                {`▼ Filters${activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}`}
+                {`Filters${activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}`}
               </button>
               <div className="klimt-filter-dropdown">
                 <MatchFilters
@@ -207,6 +208,7 @@ export default function Dashboard() {
         </div>
 
         <DayPicker selectedDates={selectedDates} onToggle={toggleDate} />
+        </div>
 
         <div className="klimt-match-wrapper">
           <MatchList matches={filteredMatches} isLoading={isLoading} />

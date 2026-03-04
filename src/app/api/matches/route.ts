@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUpcomingMatches, upsertMatch } from "@/lib/db/matches";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { parseMessage } from "@/lib/parser/parseMessage";
+import { detectFormat } from "@/lib/parser/detectFormat";
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,17 +10,19 @@ export async function POST(request: NextRequest) {
 
     if (typeof body !== "string" || !body.includes("playtomic.io")) {
       return NextResponse.json(
-        { error: "Body must contain a playtomic.io link" },
+        { error: "Message must contain a Playtomic link (playtomic.io)." },
         { status: 400 }
       );
     }
 
+    const format = detectFormat(body);
     const parsed = parseMessage(body);
     if (parsed === null) {
-      return NextResponse.json(
-        { error: "Could not parse match" },
-        { status: 422 }
-      );
+      const msg =
+        format === "formatC"
+          ? "Message format not recognised. Paste the full WhatsApp match message including emojis (📅📊✅⚪) and the Playtomic link."
+          : "Could not extract match details. Make sure the message includes date, time, level, player list, and a Playtomic link.";
+      return NextResponse.json({ error: msg }, { status: 422 });
     }
 
     const supabase = getSupabaseServerClient();

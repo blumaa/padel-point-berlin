@@ -3,7 +3,7 @@
 import { useRef, useState, useLayoutEffect, useEffect } from "react";
 import { createPortal } from "react-dom";
 import gsap from "gsap";
-import { PadelPointBerlin } from "@/app/stage/PadelPointBerlin";
+import { PadelPointBerlin } from "@/components/PadelPointBerlin";
 
 interface LogoOverlayProps {
   sourceRect: DOMRect;

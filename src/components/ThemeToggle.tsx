@@ -6,9 +6,8 @@ type Theme = "dark" | "light";
 
 function getInitialTheme(): Theme {
   if (typeof window === "undefined") return "dark";
-  const stored = localStorage.getItem("theme");
-  if (stored === "light" || stored === "dark") return stored;
-  return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+  const match = document.cookie.match(/(?:^|;\s*)theme=([^;]*)/);
+  return match?.[1] === "light" ? "light" : "dark";
 }
 
 function applyTheme(theme: Theme) {
@@ -34,7 +33,7 @@ export default function ThemeToggle() {
     const next: Theme = theme === "dark" ? "light" : "dark";
     setTheme(next);
     applyTheme(next);
-    localStorage.setItem("theme", next);
+    document.cookie = `theme=${next}; path=/; max-age=31536000; SameSite=Lax`;
   }
 
   // Render a placeholder during SSR / before hydration to avoid layout shift

@@ -1,6 +1,6 @@
 "use client";
 
-import { PadelPointBerlin } from "./PadelPointBerlin";
+import { PadelPointBerlin } from "@/components/PadelPointBerlin";
 
 export default function Stage() {
   return (

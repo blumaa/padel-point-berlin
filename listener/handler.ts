@@ -24,6 +24,11 @@ export async function handleMessage(
     return;
   }
 
+  // Skip class messages — they are not matches
+  if (message.body.includes("app.playtomic.io/lesson_class/")) {
+    return;
+  }
+
   // Skip if already stored (idempotency for fetch-recent re-runs)
   if (message.timestamp) {
     const ts = new Date(message.timestamp * 1000).toISOString();

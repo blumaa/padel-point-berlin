@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect } from "react";
+
 interface Player {
   name: string;
   level: number | null;
@@ -33,12 +35,62 @@ function extractClub(groupName: string | null): string | null {
   return club;
 }
 
+function PadelPlayerIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {/* Head */}
+      <circle cx="12" cy="4" r="2" />
+      {/* Body */}
+      <line x1="12" y1="6" x2="12" y2="15" />
+      {/* Left leg */}
+      <line x1="12" y1="15" x2="9" y2="21" />
+      {/* Right leg */}
+      <line x1="12" y1="15" x2="15" y2="21" />
+      {/* Left arm */}
+      <line x1="12" y1="9" x2="9" y2="13" />
+      {/* Right arm holding racket */}
+      <line x1="12" y1="9" x2="16" y2="11" />
+      {/* Padel racket */}
+      <rect x="16" y="9" width="5" height="6" rx="2" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 interface MatchCardProps {
   match: Match;
   isAlt?: boolean;
 }
 
 export default function MatchCard({ match, isAlt = false }: MatchCardProps) {
+  const [isViewed, setIsViewed] = useState(false);
+
+  useEffect(() => {
+    try {
+      const ids = JSON.parse(localStorage.getItem("ppb-viewed") ?? "[]") as string[];
+      setIsViewed(ids.includes(match.id));
+    } catch {}
+  }, [match.id]);
+
+  function markViewed() {
+    try {
+      const ids = JSON.parse(localStorage.getItem("ppb-viewed") ?? "[]") as string[];
+      if (!ids.includes(match.id)) {
+        localStorage.setItem("ppb-viewed", JSON.stringify([...ids, match.id]));
+      }
+      setIsViewed(true);
+    } catch {}
+  }
+
   const time = new Date(match.match_time);
   const timeStr = time.toLocaleTimeString("en-US", {
     hour: "2-digit",
@@ -70,10 +122,37 @@ export default function MatchCard({ match, isAlt = false }: MatchCardProps) {
     <div className={`klimt-card${isAlt ? " klimt-card-alt" : ""}`}>
       <div className="klimt-card-body">
         <div className="klimt-card-info">
+          {isViewed && (
+            <span className="klimt-card-eye" aria-label="Viewed" title="Viewed">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </span>
+          )}
           <div className="klimt-card-row">
             <span className="klimt-card-day">{dayStr}</span>
             <span className="klimt-card-time">{timeStr}</span>
-            <span className="klimt-card-venue">{clubName}</span>
+            <div className="klimt-card-venue-row">
+              <span className="klimt-card-venue">{clubName}</span>
+              {clubName !== "—" && (
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clubName + ", Berlin")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="klimt-card-map-btn"
+                  aria-label={`Open ${clubName} in Google Maps`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                    <circle cx="12" cy="10" r="3"/>
+                  </svg>
+                </a>
+              )}
+            </div>
           </div>
           <div className="klimt-card-badges">
             {levelStr ? (
@@ -108,9 +187,12 @@ export default function MatchCard({ match, isAlt = false }: MatchCardProps) {
                     aria-hidden="true"
                   />
                   <span className={confirmed ? "klimt-court-name" : "klimt-court-name--open"}>
-                    {confirmed
-                      ? `P${slot}${p!.level != null ? ` (${p!.level})` : ""}`
-                      : "Open"}
+                    {confirmed ? (
+                      <>
+                        <PadelPlayerIcon />
+                        {p!.level != null ? ` ${p!.level}` : ""}
+                      </>
+                    ) : "Open"}
                   </span>
                 </div>
               );
@@ -137,9 +219,12 @@ export default function MatchCard({ match, isAlt = false }: MatchCardProps) {
                     aria-hidden="true"
                   />
                   <span className={confirmed ? "klimt-court-name" : "klimt-court-name--open"}>
-                    {confirmed
-                      ? `P${slot}${p!.level != null ? ` (${p!.level})` : ""}`
-                      : "Open"}
+                    {confirmed ? (
+                      <>
+                        <PadelPlayerIcon />
+                        {p!.level != null ? ` ${p!.level}` : ""}
+                      </>
+                    ) : "Open"}
                   </span>
                 </div>
               );
@@ -151,6 +236,7 @@ export default function MatchCard({ match, isAlt = false }: MatchCardProps) {
       {match.playtomic_url && (
         <a
           href={match.playtomic_url}
+          onClick={markViewed}
           target="_blank"
           rel="noopener noreferrer"
           className="klimt-cta"

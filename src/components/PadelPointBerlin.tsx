@@ -11,43 +11,87 @@ export function PadelPointBerlin() {
 
   useGSAP(
     () => {
+      // ── Initial state ────────────────────────────────────────────────────────
+
       gsap.set("#ppb-bg", { opacity: 0 });
-      gsap.set("#ppb-line-v", { strokeDasharray: 510, strokeDashoffset: 510, opacity: 0 });
-      gsap.set("#ppb-line-h", { strokeDasharray: 330, strokeDashoffset: 330, opacity: 0 });
-      gsap.set(["#ppb-P", "#ppb-A", "#ppb-D", "#ppb-E", "#ppb-L"], { opacity: 0, y: -70 });
+
+      gsap.set("#ppb-line-v", {
+        strokeDasharray: 510,
+        strokeDashoffset: 510,
+        opacity: 0,
+      });
+
+      gsap.set("#ppb-line-h", {
+        strokeDasharray: 330,
+        strokeDashoffset: 330,
+        opacity: 0,
+      });
+
+      gsap.set(["#ppb-P", "#ppb-A", "#ppb-D", "#ppb-E", "#ppb-L"], {
+        opacity: 0,
+        y: -70,
+      });
+
       gsap.set("#ppb-B", { opacity: 0, x: -60 });
-      gsap.set(["#ppb-R", "#ppb-L2", "#ppb-I", "#ppb-N"], { opacity: 0, x: 60 });
-      gsap.set("#ppb-point-wrapper", { opacity: 0, y: -200 });
+
+      gsap.set(["#ppb-R", "#ppb-L2", "#ppb-I", "#ppb-N"], {
+        opacity: 0,
+        x: 60,
+      });
+
+      gsap.set("#ppb-point-wrapper", { opacity: 0 });
+
+      // ── Intro timeline ───────────────────────────────────────────────────────
 
       const tl = gsap.timeline();
+
       tl.to("#ppb-bg", { opacity: 1, duration: 0.5, ease: "power2.out" }, 0);
-      tl.to("#ppb-line-v", { strokeDashoffset: 0, opacity: 1, duration: 0.8, ease: "power2.inOut" }, 0.3);
-      tl.to("#ppb-line-h", { strokeDashoffset: 0, opacity: 1, duration: 0.8, ease: "power2.inOut" }, 0.6);
+
+      tl.to(
+        "#ppb-line-v",
+        { strokeDashoffset: 0, opacity: 1, duration: 0.8, ease: "power2.inOut" },
+        0.3,
+      );
+
+      tl.to(
+        "#ppb-line-h",
+        { strokeDashoffset: 0, opacity: 1, duration: 0.8, ease: "power2.inOut" },
+        0.6,
+      );
+
       tl.to(
         ["#ppb-P", "#ppb-A", "#ppb-D", "#ppb-E", "#ppb-L"],
         { opacity: 1, y: 0, duration: 0.45, stagger: 0.12, ease: "back.out(1.7)" },
-        1.1
+        1.1,
       );
-      tl.to("#ppb-point-wrapper", { y: 0, opacity: 1, duration: 1.1, ease: "bounce.out" }, 1.6);
-      tl.to("#ppb-ball-spin", { rotation: 540, duration: 1.1, ease: "power2.out", transformOrigin: "center center" }, 1.6);
-      tl.to("#ppb-B", { x: 0, opacity: 1, duration: 0.45, ease: "back.out(1.7)" }, 2.5);
+
+      tl.fromTo(
+        "#ppb-point-wrapper",
+        { opacity: 0 },
+        { opacity: 1, ease: "bounce.out" },
+        1.6,
+      );
+
+      tl.to(
+        "#ppb-B",
+        { x: 0, opacity: 1, duration: 0.45, ease: "back.out(1.7)" },
+        2.5,
+      );
+
       tl.to(
         ["#ppb-R", "#ppb-L2", "#ppb-I", "#ppb-N"],
         { x: 0, opacity: 1, duration: 0.45, stagger: 0.08, ease: "back.out(1.7)" },
-        2.5
+        2.5,
       );
 
-      gsap.to("#ppb-ball-spin", {
-        rotation: "+=360",
-        duration: 5,
-        yoyo: true,
-        repeat: -1,
-        ease: "sine.inOut",
-        transformOrigin: "center center",
-        delay: 3.8,
-      });
+      tl.fromTo(
+        "#ppb-ball-spin",
+        { y: -250 },
+        { y: 0, duration: 1.2, ease: "bounce.out" },
+        3,
+      );
     },
-    { scope: svgRef }
+    { scope: svgRef },
   );
 
   return (
@@ -73,16 +117,11 @@ export function PadelPointBerlin() {
         </filter>
       </defs>
 
-      {/* Drop shadow backdrop */}
       <circle cx="200" cy="200" r="250" fill="#18181B" filter="url(#ppb-outer-shadow)" />
 
-      {/* All logo content clipped to circle */}
       <g clipPath="url(#ppb-circle-clip)">
-
-        {/* Background */}
         <rect id="ppb-bg" fill="#18181B" x="-60" y="-60" width="520" height="520" />
 
-        {/* Court lines */}
         <path id="ppb-line-v" stroke="#06B6D4" strokeWidth="8.84488" fill="none" d="M 139.93335,-55 V 455" />
         <path id="ppb-line-h" stroke="#06B6D4" strokeWidth="8.84488" fill="none" d="M 139.93335,236.28330 H 470" />
 
@@ -143,7 +182,6 @@ export function PadelPointBerlin() {
         {/* Point logo */}
         <g id="ppb-point-wrapper">
           <g transform="matrix(1.572456,0,0,1.572456,-171.16837,-55.120228)" filter="url(#ppb-shadow)">
-            {/* "int" text */}
             <g transform="matrix(0.50661928,0,0,0.50327781,135.13362,29.905848)">
               <text
                 style={{ fontSize: "53.3333px", fill: "#06B6D4", fillOpacity: 1, strokeWidth: "1.38511" }}
@@ -155,28 +193,20 @@ export function PadelPointBerlin() {
                 </tspan>
               </text>
             </g>
-
-            {/* Tennis ball */}
             <g transform="matrix(0.50661928,0,0,0.50327781,132.8246,32.503499)">
               <g id="ppb-ball-spin">
-                <circle cx="261" cy="160" r="25" fill="#F59E0B" stroke="#D97706" strokeWidth="2" />
+                <circle cx="261" cy="160" r="25" fill="#dbff00" stroke="#b8d600" strokeWidth="2" />
                 <path fill="none" stroke="#000" strokeWidth="2" d="m 246,144 q 15,16 0,32 m 30,-32 q -15,16 0,32" />
               </g>
             </g>
-
-            {/* "p" text */}
             <text
               style={{ fontStyle: "normal", fontVariant: "normal", fontWeight: "bold", fontStretch: "normal", fontSize: "53.3333px", fontFamily: "Helvetica Neue, Arial, sans-serif", fill: "#06B6D4", fillOpacity: 1, stroke: "#06B6D4", strokeOpacity: 1 }}
               x="226.26746" y="126.25068"
-            >
-              p
-            </text>
+            >p</text>
           </g>
         </g>
+      </g>
 
-      </g>{/* end clipPath group */}
-
-      {/* Cyan border ring */}
       <circle cx="200" cy="200" r="250" fill="none" stroke="#06B6D4" strokeWidth="14" />
     </svg>
   );
