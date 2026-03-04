@@ -29,13 +29,48 @@ function allDates(): string[] {
 export default function Dashboard() {
   const dates14 = useMemo(allDates, []);
 
-  const [selectedDates, setSelectedDates] = useState<string[]>(allDates());
-  const [filters, setFilters] = useState<FilterState>(defaultFilters);
+  // Persist selected dates as day offsets (0–13) so they stay correct across days
+  const [selectedDates, setSelectedDates] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem("ppb-selected-offsets");
+      if (stored) {
+        const offsets = JSON.parse(stored) as number[];
+        const all = allDates();
+        const restored = offsets.map((i) => all[i]).filter(Boolean);
+        if (restored.length > 0) return restored;
+      }
+    } catch {}
+    return allDates();
+  });
+
+  const [filters, setFilters] = useState<FilterState>(() => {
+    try {
+      const stored = localStorage.getItem("ppb-filters");
+      if (stored) return { ...defaultFilters, ...JSON.parse(stored) };
+    } catch {}
+    return defaultFilters;
+  });
+
   const [availableVenues, setAvailableVenues] = useState<string[]>([]);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
-  const [sortField, setSortField] = useState<"date" | "added">("date");
-  const [sortDir, setSortDir]     = useState<"asc" | "desc">("asc");
+
+  const [sortField, setSortField] = useState<"date" | "added">(() => {
+    try {
+      const s = localStorage.getItem("ppb-sort-field");
+      if (s === "date" || s === "added") return s;
+    } catch {}
+    return "date";
+  });
+
+  const [sortDir, setSortDir] = useState<"asc" | "desc">(() => {
+    try {
+      const s = localStorage.getItem("ppb-sort-dir");
+      if (s === "asc" || s === "desc") return s;
+    } catch {}
+    return "asc";
+  });
+
   const [logoExpanded, setLogoExpanded] = useState(false);
   const [logoRect, setLogoRect] = useState<DOMRect | null>(null);
   const logoRef = useRef<HTMLDivElement>(null);
@@ -43,13 +78,41 @@ export default function Dashboard() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Persist state to localStorage
+  useEffect(() => {
+    try {
+      const all = allDates();
+      const offsets = selectedDates.map((d) => all.indexOf(d)).filter((i) => i >= 0);
+      localStorage.setItem("ppb-selected-offsets", JSON.stringify(offsets));
+    } catch {}
+  }, [selectedDates]);
+
+  useEffect(() => {
+    try { localStorage.setItem("ppb-filters", JSON.stringify(filters)); } catch {}
+  }, [filters]);
+
+  useEffect(() => {
+    try { localStorage.setItem("ppb-sort-field", sortField); } catch {}
+  }, [sortField]);
+
+  useEffect(() => {
+    try { localStorage.setItem("ppb-sort-dir", sortDir); } catch {}
+  }, [sortDir]);
+
   useEffect(() => {
     fetch("/api/venues")
       .then((r) => r.json())
       .then((data: string[]) => {
         if (!Array.isArray(data)) return;
         setAvailableVenues(data);
-        setFilters((prev) => ({ ...prev, venues: data }));
+        setFilters((prev) => {
+          // If no venues persisted yet, default to all
+          if (prev.venues.length === 0) return { ...prev, venues: data };
+          // Otherwise keep the intersection of persisted + available (handles removed venues)
+          const valid = new Set(data);
+          const kept = prev.venues.filter((v) => valid.has(v));
+          return { ...prev, venues: kept.length > 0 ? kept : data };
+        });
       })
       .catch(() => {});
   }, []);
