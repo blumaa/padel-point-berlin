@@ -32,6 +32,7 @@ function makeMatch(overrides: Partial<PlaytomicMatch> = {}): PlaytomicMatch {
         timezone: "Europe/Berlin",
       },
     },
+    competition_mode: "FRIENDLY",
     resource_properties: {
       resource_type: "indoor",
       resource_size: "P4",

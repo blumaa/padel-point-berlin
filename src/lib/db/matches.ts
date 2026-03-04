@@ -26,6 +26,7 @@ export async function upsertMatch(
         source_group: sourceGroup,
         playtomic_url: match.playtomicUrl,
         indoor: match.indoor ?? null,
+        competition_mode: match.competitionMode ?? null,
       },
       { onConflict: "playtomic_id" }
     )
@@ -83,6 +84,7 @@ export interface MatchQuery {
   venues?: string[];
   category?: string;
   indoor?: "indoor" | "outdoor" | null;
+  competitionMode?: "friendly" | "competitive" | null;
 }
 
 export async function getUpcomingMatches(
@@ -130,6 +132,10 @@ export async function getUpcomingMatches(
 
   if (query.indoor != null) {
     q = q.eq("indoor", query.indoor);
+  }
+
+  if (query.competitionMode != null) {
+    q = q.eq("competition_mode", query.competitionMode);
   }
 
   const { data, error } = await q;

@@ -20,6 +20,7 @@ interface Match {
   level_max: number | null;
   category: string;
   indoor: string | null;
+  competition_mode: string | null;
   source_group: string | null;
   playtomic_url: string | null;
   match_players: Player[];
@@ -167,9 +168,16 @@ export default function MatchCard({ match, isAlt = false }: MatchCardProps) {
               <span className="klimt-badge-level">All levels</span>
             )}
             <div className="klimt-badge-details">
-              <span className="klimt-badge-category">
-                {match.category === "Women" ? "Women only" : match.category === "Men" ? "Men only" : match.category}
-              </span>
+              {match.competition_mode && (
+                <span className="klimt-badge-category">
+                  {match.competition_mode === "friendly" ? "Friendly" : "Competitive"}
+                </span>
+              )}
+              {match.category !== "Open" && (
+                <span className="klimt-badge-category">
+                  {match.category === "Women" ? "Women only" : match.category === "Men" ? "Men only" : match.category}
+                </span>
+              )}
 
               {(match.indoor === "indoor" || match.indoor === "outdoor") && (
                 <span className={`klimt-badge klimt-badge--${match.indoor}`}>

@@ -6,7 +6,7 @@ import { detectFormat } from "@/lib/parser/detectFormat";
 
 export async function POST(request: NextRequest) {
   try {
-    const { body, indoor } = await request.json();
+    const { body, indoor, competitionMode } = await request.json();
 
     if (typeof body !== "string" || !body.includes("playtomic.io")) {
       return NextResponse.json(
@@ -51,6 +51,9 @@ export async function POST(request: NextRequest) {
 
     if (indoor === "indoor" || indoor === "outdoor") {
       parsed.indoor = indoor;
+    }
+    if (competitionMode === "friendly" || competitionMode === "competitive") {
+      parsed.competitionMode = competitionMode;
     }
     await upsertMatch(supabase, parsed, rawRow.id, "manual");
 

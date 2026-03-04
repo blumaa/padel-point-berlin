@@ -68,5 +68,9 @@ export function mapToMatch(m: PlaytomicMatch): ParsedMatch {
     category: mapGender(m.gender),
     players,
     indoor: mapIndoor(m.resource_properties),
+    competitionMode:
+      m.competition_mode === "FRIENDLY" ? "friendly"
+      : m.competition_mode === "COMPETITIVE" ? "competitive"
+      : null,
   };
 }

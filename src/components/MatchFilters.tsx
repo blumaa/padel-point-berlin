@@ -27,6 +27,7 @@ export interface FilterState {
   timeOfDay: TimeOfDay[];
   category: Category[];
   indoor: "indoor" | "outdoor" | null;
+  competitionMode: "friendly" | "competitive" | null;
 }
 
 export const defaultFilters: FilterState = {
@@ -36,6 +37,7 @@ export const defaultFilters: FilterState = {
   timeOfDay: [...TIME_OF_DAY],
   category: [...CATEGORIES],
   indoor: null,
+  competitionMode: null,
 };
 
 interface MatchFiltersProps {
@@ -65,7 +67,8 @@ export default function MatchFilters({
     filters.timeOfDay.length < TIME_OF_DAY.length ||
     filters.category.length < CATEGORIES.length ||
     filters.venues.length < availableVenues.length ||
-    filters.indoor !== null;
+    filters.indoor !== null ||
+    filters.competitionMode !== null;
 
   function handleReset() {
     const reset: FilterState = { ...defaultFilters, venues: availableVenues };
@@ -138,6 +141,12 @@ export default function MatchFilters({
 
   function setIndoor(indoor: "indoor" | "outdoor" | null) {
     const next = { ...filters, indoor };
+    setFilters(next);
+    onFilterChange(next);
+  }
+
+  function setCompetitionMode(competitionMode: "friendly" | "competitive" | null) {
+    const next = { ...filters, competitionMode };
     setFilters(next);
     onFilterChange(next);
   }
@@ -236,6 +245,23 @@ export default function MatchFilters({
               onClick={() => toggleCategory(cat)}
             >
               {CATEGORY_LABELS[cat]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Match type */}
+      <div className="klimt-filter-section klimt-filter-section--divided">
+        <span className="klimt-filter-label">Match Type</span>
+        <div className="klimt-filter-pills">
+          {([null, "friendly", "competitive"] as const).map((opt) => (
+            <button
+              key={String(opt)}
+              type="button"
+              className={`klimt-pill${filters.competitionMode === opt ? " klimt-pill--active" : ""}`}
+              onClick={() => setCompetitionMode(opt)}
+            >
+              {opt === null ? "All" : opt === "friendly" ? "Friendly" : "Competitive"}
             </button>
           ))}
         </div>

@@ -66,7 +66,8 @@ export default function Dashboard() {
       (filters.venues.length < availableVenues.length && availableVenues.length > 0 ? 1 : 0) +
       (filters.timeOfDay.length < 3 ? 1 : 0) +
       (filters.category.length < CATEGORIES.length ? 1 : 0) +
-      (filters.indoor !== null ? 1 : 0)
+      (filters.indoor !== null ? 1 : 0) +
+      (filters.competitionMode !== null ? 1 : 0)
     );
   }, [filters, availableVenues.length]);
 
@@ -111,6 +112,7 @@ export default function Dashboard() {
       if (filters.category.length < CATEGORIES.length && !filters.category.includes(match.category)) return false;
 
       if (filters.indoor !== null && match.indoor !== filters.indoor) return false;
+      if (filters.competitionMode !== null && match.competition_mode !== filters.competitionMode) return false;
 
       return true;
     });
@@ -234,6 +236,12 @@ export default function Dashboard() {
 
         <DayPicker selectedDates={selectedDates} onToggle={toggleDate} />
         </div>
+
+        {!isLoading && (
+          <p className="klimt-match-count">
+            <span className="klimt-match-count-number">{sortedMatches.length}</span> {`${sortedMatches.length === 1 ? "match" : "matches"}`}
+          </p>
+        )}
 
         <div className="klimt-match-wrapper">
           <MatchList matches={sortedMatches} isLoading={isLoading} />

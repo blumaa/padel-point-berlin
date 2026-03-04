@@ -30,6 +30,7 @@ export interface PlaytomicMatch {
   max_level: number | null;
   teams: PlaytomicTeam[];
   tenant: PlaytomicTenant;
+  competition_mode: string | null; // "FRIENDLY" | "COMPETITIVE" | null
   resource_properties: {
     resource_type: string; // "indoor" | "outdoor"
     resource_size: string;

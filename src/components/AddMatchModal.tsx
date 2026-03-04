@@ -23,6 +23,7 @@ https://app.playtomic.io/t/azqw9n9O`;
 export default function AddMatchModal({ isOpen, onClose, onSuccess }: AddMatchModalProps) {
   const [body, setBody] = useState("");
   const [indoor, setIndoor] = useState<"indoor" | "outdoor" | null>(null);
+  const [competitionMode, setCompetitionMode] = useState<"friendly" | "competitive" | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -31,6 +32,7 @@ export default function AddMatchModal({ isOpen, onClose, onSuccess }: AddMatchMo
     if (isOpen) {
       setBody("");
       setIndoor(null);
+      setCompetitionMode(null);
       setError(null);
       setTimeout(() => textareaRef.current?.focus(), 50);
     }
@@ -49,7 +51,7 @@ export default function AddMatchModal({ isOpen, onClose, onSuccess }: AddMatchMo
       const res = await fetch("/api/matches", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ body, indoor }),
+        body: JSON.stringify({ body, indoor, competitionMode }),
       });
 
       if (!res.ok) {
@@ -76,20 +78,38 @@ export default function AddMatchModal({ isOpen, onClose, onSuccess }: AddMatchMo
       <div className="klimt-modal-example">{EXAMPLE_MESSAGE}</div>
 
       <form onSubmit={handleSubmit}>
-        <div className="klimt-filter-section" style={{ marginBottom: "1rem" }}>
-          <span className="klimt-filter-label">Court Type</span>
-          <div className="klimt-filter-pills">
-            {(["indoor", "outdoor"] as const).map((opt) => (
-              <button
-                key={opt}
-                type="button"
-                className={`klimt-pill${indoor === opt ? " klimt-pill--active" : ""}`}
-                onClick={() => setIndoor(opt)}
-                disabled={isSubmitting}
-              >
-                {opt === "indoor" ? "Indoor" : "Outdoor"}
-              </button>
-            ))}
+        <div style={{ display: "flex", gap: "1.5rem", marginBottom: "1rem" }}>
+          <div className="klimt-filter-section">
+            <span className="klimt-filter-label">Court Type</span>
+            <div className="klimt-filter-pills">
+              {(["indoor", "outdoor"] as const).map((opt) => (
+                <button
+                  key={opt}
+                  type="button"
+                  className={`klimt-pill${indoor === opt ? " klimt-pill--active" : ""}`}
+                  onClick={() => setIndoor(opt)}
+                  disabled={isSubmitting}
+                >
+                  {opt === "indoor" ? "Indoor" : "Outdoor"}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="klimt-filter-section">
+            <span className="klimt-filter-label">Match Type</span>
+            <div className="klimt-filter-pills">
+              {(["friendly", "competitive"] as const).map((opt) => (
+                <button
+                  key={opt}
+                  type="button"
+                  className={`klimt-pill${competitionMode === opt ? " klimt-pill--active" : ""}`}
+                  onClick={() => setCompetitionMode(opt)}
+                  disabled={isSubmitting}
+                >
+                  {opt === "friendly" ? "Friendly" : "Competitive"}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

@@ -22,6 +22,7 @@ export interface ParsedMatch {
   category: MatchCategory;
   players: Player[];
   indoor?: "indoor" | "outdoor" | null;
+  competitionMode?: "friendly" | "competitive" | null;
 }
 
 export type MessageFormat = "formatA" | "formatB" | "formatC";
