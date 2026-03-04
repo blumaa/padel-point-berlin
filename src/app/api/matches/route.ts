@@ -3,6 +3,27 @@ import { getUpcomingMatches, upsertMatch } from "@/lib/db/matches";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { parseMessage } from "@/lib/parser/parseMessage";
 import { detectFormat } from "@/lib/parser/detectFormat";
+import { parseDate } from "@/lib/parser/parseDate";
+import type { MessageFormat } from "@/lib/types";
+
+function diagnose(body: string, format: MessageFormat): string {
+  if (format === "formatC") {
+    return "No 📅 date line found. Make sure you paste the full match message with emojis (📅📊✅⚪).";
+  }
+
+  const lines = body.split("\n");
+
+  const dateLine = lines.find((l) => l.includes("📅"));
+  if (!dateLine) return "Missing date line — no 📅 emoji found.";
+
+  const matchTime = parseDate(dateLine, new Date());
+  if (!matchTime) return `Could not parse the date from: "${dateLine.trim()}"`;
+
+  const hasPlayers = lines.some((l) => l.includes("✅") || l.includes("⚪"));
+  if (!hasPlayers) return "No player lines found — expected lines starting with ✅ or ⚪.";
+
+  return "Could not extract match details. Check that the message includes a title, date, level, players, and a Playtomic link.";
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,16 +39,14 @@ export async function POST(request: NextRequest) {
     const format = detectFormat(body);
     const parsed = parseMessage(body);
     if (parsed === null) {
-      const msg =
-        format === "formatC"
-          ? "Message format not recognised. Paste the full WhatsApp match message including emojis (📅📊✅⚪) and the Playtomic link."
-          : "Could not extract match details. Make sure the message includes date, time, venue, level, player list, and a Playtomic link.";
-      return NextResponse.json({ error: msg }, { status: 422 });
+      return NextResponse.json({ error: diagnose(body, format) }, { status: 422 });
     }
 
     if (!parsed.venue) {
+      const titleMatch = body.match(/\*([^*]+)\*/);
+      const title = titleMatch ? `"${titleMatch[1].trim()}"` : "the title";
       return NextResponse.json(
-        { error: "Could not determine the venue. Make sure the message title includes the location (e.g. \"MATCH IN PADEL FC\")." },
+        { error: `Could not find a venue name in ${title}. The title should include a recognisable club name (e.g. "MATCH IN PADEL FC").` },
         { status: 422 }
       );
     }

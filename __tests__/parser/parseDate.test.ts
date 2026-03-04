@@ -47,6 +47,14 @@ describe("parseDate (Format A)", () => {
     expect(result!.getMinutes()).toBe(0);
   });
 
+  it("parses day number before day name (04 Wednesday, 17:30)", () => {
+    const result = parseDate("📅 04 Wednesday, 17:30 (90min)", ref);
+    expect(result).not.toBeNull();
+    expect(result!.getDate()).toBe(4);
+    expect(result!.getHours()).toBe(17);
+    expect(result!.getMinutes()).toBe(30);
+  });
+
   it("returns null for non-date text", () => {
     expect(parseDate("no date here", ref)).toBeNull();
   });

@@ -25,7 +25,11 @@ const MONTH_MAP: Record<string, number> = {
 export function parseDate(text: string, referenceDate: Date): Date | null {
   // Extract day number and time from the line
   // Pattern: [optional day name stuff] DD[.,] HH:MM
-  const match = text.match(/(\d{1,2})\.?,?\s+(\d{1,2}):(\d{2})/);
+  // Handles formats:
+  //   "Tuesday 10, 13:30"   — day name before number
+  //   "Montag, 09., 13:00"  — day name before number (German)
+  //   "04 Wednesday, 17:30" — day number before day name
+  const match = text.match(/(\d{1,2})\.?,?(?:\s+[A-Za-zÀ-ÿ]+)?,?\s+(\d{1,2}):(\d{2})/);
   if (!match) return null;
 
   const dayNum = parseInt(match[1], 10);
