@@ -102,8 +102,11 @@ export default function Dashboard() {
       });
       if (!inSlot) return false;
 
-      if (filters.levelMin && match.level_min != null && match.level_min < Number(filters.levelMin)) return false;
-      if (filters.levelMax && match.level_max != null && match.level_max > Number(filters.levelMax)) return false;
+      if (filters.levelMin || filters.levelMax) {
+        if (match.level_min == null || match.level_max == null) return false;
+        if (filters.levelMin && match.level_min < Number(filters.levelMin)) return false;
+        if (filters.levelMax && match.level_max > Number(filters.levelMax)) return false;
+      }
 
       if (availableVenues.length > 0 && filters.venues.length < availableVenues.length) {
         if (!filters.venues.includes(match.venue)) return false;
