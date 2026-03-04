@@ -9,6 +9,7 @@ import LogoOverlay from "@/components/LogoOverlay";
 import Footer from "@/components/Footer";
 import AddMatchModal from "@/components/AddMatchModal";
 import ThemeToggle from "@/components/ThemeToggle";
+import { sortMatches } from "@/lib/sortMatches";
 
 const TIME_SLOTS = {
   morning:   { start: 6,  end: 11 },
@@ -32,7 +33,8 @@ export default function Dashboard() {
   const [availableVenues, setAvailableVenues] = useState<string[]>([]);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
-  const [sortOrder, setSortOrder] = useState<"time-asc" | "time-desc" | "added-desc" | "added-asc">("time-asc");
+  const [sortField, setSortField] = useState<"date" | "added">("date");
+  const [sortDir, setSortDir]     = useState<"asc" | "desc">("asc");
   const [logoExpanded, setLogoExpanded] = useState(false);
   const [logoRect, setLogoRect] = useState<DOMRect | null>(null);
   const logoRef = useRef<HTMLDivElement>(null);
@@ -111,13 +113,10 @@ export default function Dashboard() {
     });
   }, [matches, selectedDates, filters, availableVenues]);
 
-  const sortedMatches = useMemo(() => {
-    const sorted = [...filteredMatches];
-    if (sortOrder === "time-asc")   return sorted; // already ascending from API
-    if (sortOrder === "time-desc")  return sorted.reverse();
-    if (sortOrder === "added-desc") return sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    /* added-asc */                 return sorted.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-  }, [filteredMatches, sortOrder]);
+  const sortedMatches = useMemo(
+    () => sortMatches(filteredMatches, sortField, sortDir),
+    [filteredMatches, sortField, sortDir]
+  );
 
   const allSelected = dates14.every((d) => selectedDates.includes(d));
 
@@ -199,28 +198,35 @@ export default function Dashboard() {
               Clear
             </button>
           </div>
-          <button
-            onClick={() => setSortOrder((s) => {
-              const cycle = { "time-asc": "time-desc", "time-desc": "added-desc", "added-desc": "added-asc", "added-asc": "time-asc" } as const;
-              return cycle[s];
-            })}
-            className={`klimt-sort-toggle${sortOrder !== "time-asc" ? " klimt-sort-toggle--active" : ""}`}
-            aria-label="Cycle sort order"
-          >
-            <svg width="11" height="14" viewBox="0 0 11 14" fill="none" stroke="currentColor"
-                 strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <line x1="5.5" y1="1" x2="5.5" y2="13" />
-              {sortOrder === "time-asc" || sortOrder === "added-asc" ? (
-                <polyline points="2,4 5.5,1 9,4" />
-              ) : (
-                <polyline points="2,10 5.5,13 9,10" />
-              )}
-            </svg>
-            {sortOrder === "time-asc"   && "Sort: Date"}
-            {sortOrder === "time-desc"  && "Sort: Date"}
-            {sortOrder === "added-desc" && "Sort: Added"}
-            {sortOrder === "added-asc"  && "Sort: Added"}
-          </button>
+          <div className="klimt-sort-controls">
+            <div className="klimt-sort-pill">
+              {(["date", "added"] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setSortField(f)}
+                  aria-pressed={sortField === f}
+                  className={`klimt-sort-pill-btn${sortField === f ? " klimt-sort-pill-btn--active" : ""}`}
+                >
+                  {f === "date" ? "Date" : "Added"}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setSortDir((d) => d === "asc" ? "desc" : "asc")}
+              className={`klimt-sort-dir${(sortField !== "date" || sortDir !== "asc") ? " klimt-sort-dir--active" : ""}`}
+              aria-label={sortDir === "asc" ? "Sort ascending, click to reverse" : "Sort descending, click to reverse"}
+            >
+              <svg width="11" height="14" viewBox="0 0 11 14" fill="none" stroke="currentColor"
+                   strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <line x1="5.5" y1="1" x2="5.5" y2="13" />
+                {sortDir === "asc" ? (
+                  <polyline points="2,4 5.5,1 9,4" />
+                ) : (
+                  <polyline points="2,10 5.5,13 9,10" />
+                )}
+              </svg>
+            </button>
+          </div>
         </div>
 
         <DayPicker selectedDates={selectedDates} onToggle={toggleDate} />

@@ -202,7 +202,70 @@ body {
   padding-bottom: 0.25rem;
 }
 
-/* ===== Sort toggle ===== */
+/* ===== Sort controls ===== */
+.klimt-sort-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+/* Field pill */
+.klimt-sort-pill {
+  display: flex;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.klimt-sort-pill-btn {
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1;
+  padding: 0.3rem 0.5rem;
+  transition: background 0.1s, color 0.1s;
+  white-space: nowrap;
+}
+
+.klimt-sort-pill-btn--active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+}
+
+/* Direction button */
+.klimt-sort-dir {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem 0.4rem;
+  transition: border-color 0.1s, color 0.1s;
+}
+
+.klimt-sort-dir:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.klimt-sort-dir--active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ===== Sort toggle (legacy — unused) ===== */
 .klimt-sort-toggle {
   background: transparent;
   border: 1px solid var(--border);
