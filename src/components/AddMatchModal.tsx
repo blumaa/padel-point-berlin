@@ -45,6 +45,10 @@ export default function AddMatchModal({ isOpen, onClose, onSuccess }: AddMatchMo
       setError("Please select a court type (Indoor or Outdoor).");
       return;
     }
+    if (competitionMode === null) {
+      setError("Please select a match type (Friendly or Competitive).");
+      return;
+    }
     setIsSubmitting(true);
 
     try {

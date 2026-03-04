@@ -16,16 +16,29 @@ const MONTH_MAP: Record<string, number> = {
 };
 
 /**
+ * Interpret date/time components as Berlin local time (CET/CEST) and
+ * return the correct UTC instant.
+ */
+function berlinToUtc(year: number, month: number, day: number, hours: number, minutes: number): Date {
+  const fakeUtc = new Date(Date.UTC(year, month, day, hours, minutes));
+  const berlinStr = fakeUtc
+    .toLocaleString("sv-SE", { timeZone: "Europe/Berlin" })
+    .replace(" ", "T") + "Z";
+  const offset = new Date(berlinStr).getTime() - fakeUtc.getTime();
+  return new Date(fakeUtc.getTime() - offset);
+}
+
+/**
  * Parse a Format A date line like:
  * "📅 Tuesday 10, 13:30 (90min)"
  * "📅 Montag, 09., 13:00 (90min)"
+ * "📅 04 Wednesday, 17:30 (90min)"
  *
  * Extracts day number and time. Uses reference date to resolve month/year.
+ * Time is interpreted as Berlin local time (CET/CEST).
  */
 export function parseDate(text: string, referenceDate: Date): Date | null {
-  // Extract day number and time from the line
-  // Pattern: [optional day name stuff] DD[.,] HH:MM
-  // Handles formats:
+  // Handles:
   //   "Tuesday 10, 13:30"   — day name before number
   //   "Montag, 09., 13:00"  — day name before number (German)
   //   "04 Wednesday, 17:30" — day number before day name
@@ -37,8 +50,6 @@ export function parseDate(text: string, referenceDate: Date): Date | null {
   const minutes = parseInt(match[3], 10);
 
   // Resolve month/year from reference date
-  // If the day is >= reference day, assume current month
-  // If the day is < reference day, assume next month
   const refYear = referenceDate.getFullYear();
   const refMonth = referenceDate.getMonth();
   const refDay = referenceDate.getDate();
@@ -54,7 +65,7 @@ export function parseDate(text: string, referenceDate: Date): Date | null {
     }
   }
 
-  return new Date(year, month, dayNum, hours, minutes);
+  return berlinToUtc(year, month, dayNum, hours, minutes);
 }
 
 /**
@@ -86,8 +97,7 @@ export function parseDateFormatB(text: string): Date | null {
   if (ampm === "pm" && hours !== 12) hours += 12;
   if (ampm === "am" && hours === 12) hours = 0;
 
-  // Use current year
   const year = new Date().getFullYear();
 
-  return new Date(year, month, day, hours, minutes);
+  return berlinToUtc(year, month, day, hours, minutes);
 }
