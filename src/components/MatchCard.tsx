@@ -119,6 +119,9 @@ function MatchCard({ match, isAlt = false }: MatchCardProps) {
       : null;
 
   const clubName = match.venue || extractClub(match.source_group) || "—";
+  const venueWords = clubName.split(" ");
+  const venueLastWord = venueWords[venueWords.length - 1];
+  const venueInit = venueWords.slice(0, -1).join(" ");
 
   return (
     <div className={`klimt-card${isAlt ? " klimt-card-alt" : ""}`}>
@@ -142,23 +145,28 @@ function MatchCard({ match, isAlt = false }: MatchCardProps) {
               )}
             </div>
             <div className="klimt-card-venue-row">
-              <span className="klimt-card-venue">{clubName}</span>
-              {clubName !== "—" && (
-                <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clubName + ", Berlin")}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="klimt-card-map-btn"
-                  aria-label={`Open ${clubName} in Google Maps`}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                    <circle cx="12" cy="10" r="3"/>
-                  </svg>
-                </a>
-              )}
+              <span className="klimt-card-venue">
+                {venueInit && venueInit + " "}
+                <span style={{ whiteSpace: "nowrap" }}>
+                  {venueLastWord}
+                  {clubName !== "—" && (
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clubName + ", Berlin")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="klimt-card-map-btn"
+                      aria-label={`Open ${clubName} in Google Maps`}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                           strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                        <circle cx="12" cy="10" r="3"/>
+                      </svg>
+                    </a>
+                  )}
+                </span>
+              </span>
             </div>
           </div>
           <div className="klimt-card-badges">
