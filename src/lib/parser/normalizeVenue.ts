@@ -18,11 +18,24 @@ function stripPrefix(raw: string): string {
 }
 
 // Canonical venue table — add entries here as new venues appear.
+// Order matters: more specific patterns must come before broader ones.
 const VENUE_ALIASES: Array<{ pattern: RegExp; canonical: string }> = [
-  { pattern: /charlotte|charlottenburg/i, canonical: "Mitte Charlotte" },
-  { pattern: /padel\s*fc|padelhaus/i,     canonical: "Padelhaus GmbH" },
-  { pattern: /pbc/i,                       canonical: "PBC Center" },
-  { pattern: /tio\s*tio/i,               canonical: "Tio Tio" },
+  { pattern: /charlotte|charlottenburg/i,              canonical: "Mitte Charlotte" },
+  { pattern: /4\s*padel|we\s+are\s+padel/i,           canonical: "4PADEL Berlin" },
+  { pattern: /pbc/i,                                   canonical: "PBC Center" },
+  { pattern: /tio\s*tio/i,                            canonical: "Tio Tio" },
+  { pattern: /padel\s*fc|padelhaus/i,                  canonical: "Padelhaus GmbH" },
+  { pattern: /padel\s*city/i,                          canonical: "PadelCity Berlin" },
+  { pattern: /padel\s*bros/i,                          canonical: "PadelBros" },
+  { pattern: /neuk[öo]lln/i,                           canonical: "Padel Neukölln" },
+  { pattern: /beach\s*mitte/i,                         canonical: "BeachMitte" },
+  { pattern: /lankwitz/i,                              canonical: "Padel Lankwitz" },
+  { pattern: /birgit/i,                                canonical: "Birgit Padel" },
+  { pattern: /rainbow/i,                               canonical: "Rainbow Padel" },
+  { pattern: /ludwigsfelde/i,                          canonical: "Padel Ludwigsfelde" },
+  { pattern: /grenzallee/i,                            canonical: "Grenzallee Padel" },
+  { pattern: /padel\s+mitte|m[üu]llerstr|padel\s+wedding/i, canonical: "Padel Mitte" },
+  { pattern: /wiesenweg/i,                             canonical: "Padel Berlin" },
 ];
 
 export function normalizeVenue(raw: string | null): string | null {

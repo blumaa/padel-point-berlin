@@ -26,7 +26,9 @@ function extractClub(groupName: string | null): string | null {
   if (!groupName) return null;
   const sep = groupName.search(/ [-–] (?!\d)/);
   const raw = sep > 0 ? groupName.slice(0, sep) : groupName;
-  const club = raw.replace(/\s*(level|padel\s+level|bronze|silver|gold).*$/i, "").trim();
+  const club = raw
+    .replace(/\s*(level|padel\s+level|bronze|silver|gold).*$/i, "")
+    .trim();
   if (!club || club.length < 2 || /^padel\s*(level)?$/i.test(club)) return null;
   return club;
 }
@@ -43,7 +45,10 @@ export default function MatchCard({ match, isAlt = false }: MatchCardProps) {
     minute: "2-digit",
     hour12: false,
   });
-  const dayStr = time.toLocaleDateString("en-US", { weekday: "short", day: "numeric" });
+  const dayStr = time.toLocaleDateString("en-US", {
+    weekday: "short",
+    day: "numeric",
+  });
 
   const seenSlots = new Set<number>();
   const players = [...match.match_players]
@@ -71,28 +76,76 @@ export default function MatchCard({ match, isAlt = false }: MatchCardProps) {
             <span className="klimt-card-venue">{clubName}</span>
           </div>
           <div className="klimt-card-badges">
-            {levelStr && <span className="klimt-badge-level">Level {levelStr}</span>}
-            <span className="klimt-badge-category">{match.category}</span>
-            {match.duration_min && (
-              <span className="klimt-card-duration">{match.duration_min} min</span>
+            {levelStr ? (
+              <span className="klimt-badge-level">Level {levelStr}</span>
+            ) : (
+              <span className="klimt-badge-level">All levels</span>
             )}
+            <div className="klimt-badge-details">
+              <span className="klimt-badge-category">{match.category}</span>
+              {match.duration_min && (
+                <span className="klimt-card-duration">
+                  {match.duration_min} min
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
-        {players.length > 0 && (
-          <div className="klimt-card-players">
-            {players.map((p) => (
-              <div key={p.slot_order} className="klimt-card-player">
-                <span className={p.status === "confirmed" ? "klimt-dot klimt-dot-confirmed" : "klimt-dot klimt-dot-open"} />
-                <span className={p.status === "confirmed" ? "klimt-card-player-name" : "klimt-card-player-name--open"}>
-                  {p.status === "confirmed"
-                    ? `P${p.slot_order}${p.level != null ? ` (${p.level})` : ""}`
-                    : "Open"}
-                </span>
-              </div>
-            ))}
+        <div className="klimt-court" aria-label="Court layout">
+          {/* Team A — slots 1 & 2 */}
+          <div className="klimt-court-team klimt-court-team--a">
+            {[1, 2].map((slot) => {
+              const p = players.find((pl) => pl.slot_order === slot);
+              const confirmed = p?.status === "confirmed";
+              return (
+                <div
+                  key={slot}
+                  className={`klimt-court-slot${confirmed ? " klimt-court-slot--confirmed" : ""}`}
+                >
+                  <span
+                    className={confirmed ? "klimt-dot klimt-dot-confirmed" : "klimt-dot klimt-dot-open"}
+                    aria-hidden="true"
+                  />
+                  <span className={confirmed ? "klimt-court-name" : "klimt-court-name--open"}>
+                    {confirmed
+                      ? `P${slot}${p!.level != null ? ` (${p!.level})` : ""}`
+                      : "Open"}
+                  </span>
+                </div>
+              );
+            })}
           </div>
-        )}
+
+          {/* Net */}
+          <div className="klimt-court-net" aria-hidden="true">
+            <span className="klimt-court-net-line" />
+          </div>
+
+          {/* Team B — slots 3 & 4 */}
+          <div className="klimt-court-team klimt-court-team--b">
+            {[3, 4].map((slot) => {
+              const p = players.find((pl) => pl.slot_order === slot);
+              const confirmed = p?.status === "confirmed";
+              return (
+                <div
+                  key={slot}
+                  className={`klimt-court-slot${confirmed ? " klimt-court-slot--confirmed" : ""}`}
+                >
+                  <span
+                    className={confirmed ? "klimt-dot klimt-dot-confirmed" : "klimt-dot klimt-dot-open"}
+                    aria-hidden="true"
+                  />
+                  <span className={confirmed ? "klimt-court-name" : "klimt-court-name--open"}>
+                    {confirmed
+                      ? `P${slot}${p!.level != null ? ` (${p!.level})` : ""}`
+                      : "Open"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       {match.playtomic_url && (

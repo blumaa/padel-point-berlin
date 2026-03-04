@@ -1,13 +1,7 @@
 "use client";
 
-import { useState } from "react";
-
-interface MatchFiltersProps {
-  isOpen: boolean;
-  value: FilterState;
-  availableVenues: string[];
-  onFilterChange: (filters: FilterState) => void;
-}
+import { useState, useEffect } from "react";
+import Drawer from "@/components/Drawer";
 
 export const TIME_OF_DAY = ["morning", "afternoon", "evening"] as const;
 export type TimeOfDay = typeof TIME_OF_DAY[number];
@@ -17,12 +11,21 @@ const TIME_LABELS: Record<TimeOfDay, string> = {
   evening: "Evening (17–24)",
 };
 
+export const CATEGORIES = ["Open", "Mixed", "Women", "Men"] as const;
+export type Category = typeof CATEGORIES[number];
+const CATEGORY_LABELS: Record<Category, string> = {
+  Open: "Open",
+  Mixed: "Mixed",
+  Women: "Women only",
+  Men: "Men only",
+};
+
 export interface FilterState {
   levelMin: string;
   levelMax: string;
   venues: string[];
   timeOfDay: TimeOfDay[];
-  category: string;
+  category: Category[];
 }
 
 export const defaultFilters: FilterState = {
@@ -30,12 +33,54 @@ export const defaultFilters: FilterState = {
   levelMax: "",
   venues: [],
   timeOfDay: [...TIME_OF_DAY],
-  category: "",
+  category: [...CATEGORIES],
 };
 
-export default function MatchFilters({ isOpen, value, availableVenues, onFilterChange }: MatchFiltersProps) {
+interface MatchFiltersProps {
+  isOpen: boolean;
+  value: FilterState;
+  availableVenues: string[];
+  onFilterChange: (filters: FilterState) => void;
+  onClose: () => void;
+}
+
+export default function MatchFilters({
+  isOpen,
+  value,
+  availableVenues,
+  onFilterChange,
+  onClose,
+}: MatchFiltersProps) {
   const [filters, setFilters] = useState<FilterState>(value);
   const [venuesOpen, setVenuesOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // SSR-safe mobile detection
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639px)");
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  // Sync external value changes into local filter state
+  useEffect(() => {
+    setFilters(value);
+  }, [value]);
+
+  const isFiltered =
+    filters.levelMin !== "" ||
+    filters.levelMax !== "" ||
+    filters.timeOfDay.length < TIME_OF_DAY.length ||
+    filters.category.length < CATEGORIES.length ||
+    filters.venues.length < availableVenues.length;
+
+  function handleReset() {
+    const reset: FilterState = { ...defaultFilters, venues: availableVenues };
+    setFilters(reset);
+    onFilterChange(reset);
+  }
 
   function toggleTimeOfDay(slot: TimeOfDay) {
     const next = {
@@ -48,8 +93,37 @@ export default function MatchFilters({ isOpen, value, availableVenues, onFilterC
     onFilterChange(next);
   }
 
-  function updateField(field: keyof Omit<FilterState, "venues" | "timeOfDay">, value: string) {
-    const next = { ...filters, [field]: value };
+  function updateLevel(field: "levelMin" | "levelMax", raw: string) {
+    let val = raw;
+    if (raw !== "") {
+      const n = parseFloat(raw);
+      if (!isNaN(n)) {
+        val = String(Math.min(10, Math.max(0, n)));
+      }
+    }
+
+    let next: FilterState = { ...filters, [field]: val };
+
+    if (next.levelMin !== "" && next.levelMax !== "") {
+      const lo = parseFloat(next.levelMin);
+      const hi = parseFloat(next.levelMax);
+      if (!isNaN(lo) && !isNaN(hi)) {
+        if (field === "levelMin" && lo > hi) next = { ...next, levelMax: val };
+        if (field === "levelMax" && hi < lo) next = { ...next, levelMin: val };
+      }
+    }
+
+    setFilters(next);
+    onFilterChange(next);
+  }
+
+  function toggleCategory(cat: Category) {
+    const next = {
+      ...filters,
+      category: filters.category.includes(cat)
+        ? filters.category.filter((c) => c !== cat)
+        : [...filters.category, cat],
+    };
     setFilters(next);
     onFilterChange(next);
   }
@@ -71,92 +145,117 @@ export default function MatchFilters({ isOpen, value, availableVenues, onFilterC
     onFilterChange(next);
   }
 
-  if (!isOpen) return null;
-
-  return (
-    <div className="klimt-filter-panel">
+  const filterContent = (
+    <>
       {/* Level */}
-      <div className="klimt-filter-level-grid">
-        <div>
-          <label className="klimt-filter-label">Min Level</label>
-          <input
-            type="number" step="0.1" min="0" max="10"
-            value={filters.levelMin}
-            onChange={(e) => updateField("levelMin", e.target.value)}
-            placeholder="0"
-            className="klimt-input"
-          />
-        </div>
-        <div>
-          <label className="klimt-filter-label">Max Level</label>
-          <input
-            type="number" step="0.1" min="0" max="10"
-            value={filters.levelMax}
-            onChange={(e) => updateField("levelMax", e.target.value)}
-            placeholder="10"
-            className="klimt-input"
-          />
+      <div className="klimt-filter-section">
+        <span className="klimt-filter-label">Level</span>
+        <div className="klimt-filter-level-row">
+          <div className="klimt-filter-level-field">
+            <label className="klimt-filter-sublabel" htmlFor="levelMin">
+              From
+            </label>
+            <input
+              id="levelMin"
+              type="number"
+              step="0.1"
+              min="0"
+              max="10"
+              value={filters.levelMin}
+              onChange={(e) => updateLevel("levelMin", e.target.value)}
+              onBlur={(e) => updateLevel("levelMin", e.target.value)}
+              placeholder="0"
+              aria-label="Minimum level"
+              className="klimt-input klimt-input--level"
+            />
+          </div>
+          <span className="klimt-filter-level-sep">—</span>
+          <div className="klimt-filter-level-field">
+            <label className="klimt-filter-sublabel" htmlFor="levelMax">
+              To
+            </label>
+            <input
+              id="levelMax"
+              type="number"
+              step="0.1"
+              min="0"
+              max="10"
+              value={filters.levelMax}
+              onChange={(e) => updateLevel("levelMax", e.target.value)}
+              onBlur={(e) => updateLevel("levelMax", e.target.value)}
+              placeholder="10"
+              aria-label="Maximum level"
+              className="klimt-input klimt-input--level"
+            />
+          </div>
         </div>
       </div>
 
       {/* Time of day */}
-      <div className="klimt-filter-section">
-        <label className="klimt-filter-label">Time of Day</label>
-        {TIME_OF_DAY.map((slot) => (
-          <label key={slot} className="klimt-filter-checkbox-row">
-            <input
-              type="checkbox"
-              checked={filters.timeOfDay.includes(slot)}
-              onChange={() => toggleTimeOfDay(slot)}
-              className="klimt-checkbox"
-            />
-            <span className="klimt-filter-checkbox-label">{TIME_LABELS[slot]}</span>
-          </label>
-        ))}
+      <div className="klimt-filter-section klimt-filter-section--divided">
+        <span className="klimt-filter-label">Time of Day</span>
+        <div className="klimt-filter-pills">
+          {TIME_OF_DAY.map((slot) => (
+            <button
+              key={slot}
+              type="button"
+              className={`klimt-pill${filters.timeOfDay.includes(slot) ? " klimt-pill--active" : ""}`}
+              onClick={() => toggleTimeOfDay(slot)}
+            >
+              {TIME_LABELS[slot]}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Category */}
-      <div>
-        <label className="klimt-filter-label">Category</label>
-        <select
-          value={filters.category}
-          onChange={(e) => updateField("category", e.target.value)}
-          className="klimt-input"
-        >
-          <option value="">All</option>
-          <option value="Open">Open</option>
-          <option value="Mixed">Mixed</option>
-          <option value="Women">Women</option>
-          <option value="Men">Men</option>
-        </select>
+      <div className="klimt-filter-section klimt-filter-section--divided">
+        <span className="klimt-filter-label">Category</span>
+        <div className="klimt-filter-pills">
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              className={`klimt-pill${filters.category.includes(cat) ? " klimt-pill--active" : ""}`}
+              onClick={() => toggleCategory(cat)}
+            >
+              {CATEGORY_LABELS[cat]}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Venue checkboxes */}
+      {/* Venues */}
       {availableVenues.length > 0 && (
-        <div>
-          <button
-            onClick={() => setVenuesOpen((v) => !v)}
-            className="klimt-filter-venue-header"
-          >
-            <span className="klimt-filter-venue-title">Venue {venuesOpen ? "▲" : "▼"}</span>
+        <div className="klimt-filter-section klimt-filter-section--divided">
+          <div className="klimt-filter-venue-header">
+            <button
+              type="button"
+              onClick={() => setVenuesOpen((v) => !v)}
+              className="klimt-filter-venue-title"
+              aria-expanded={venuesOpen}
+            >
+              Venue {venuesOpen ? "▲" : "▼"}
+            </button>
             <div className="klimt-filter-venue-actions">
-              <span
-                onClick={(e) => { e.stopPropagation(); setVenues(availableVenues); }}
+              <button
+                type="button"
+                onClick={() => setVenues(availableVenues)}
                 className={`klimt-filter-venue-action${filters.venues.length === availableVenues.length ? " klimt-filter-venue-action--inactive" : ""}`}
               >
                 All
-              </span>
-              <span
-                onClick={(e) => { e.stopPropagation(); setVenues([]); }}
+              </button>
+              <button
+                type="button"
+                onClick={() => setVenues([])}
                 className={`klimt-filter-venue-action${filters.venues.length === 0 ? " klimt-filter-venue-action--inactive" : ""}`}
               >
                 None
-              </span>
+              </button>
             </div>
-          </button>
-
+          </div>
           {venuesOpen && (
-            <div className="klimt-filter-section">
+            <div className="klimt-filter-venue-list">
               {availableVenues.map((venue) => (
                 <label key={venue} className="klimt-filter-checkbox-row">
                   <input
@@ -172,6 +271,42 @@ export default function MatchFilters({ isOpen, value, availableVenues, onFilterC
           )}
         </div>
       )}
-    </div>
+    </>
+  );
+
+  // Desktop: render inline panel
+  if (!isMobile) {
+    if (!isOpen) return null;
+    return <div className="klimt-filter-panel">{filterContent}</div>;
+  }
+
+  // Mobile: bottom drawer via reusable Drawer component
+  return (
+    <Drawer
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Filters"
+      actions={
+        <>
+          <button
+            type="button"
+            className="klimt-drawer-reset"
+            onClick={handleReset}
+            disabled={!isFiltered}
+          >
+            Reset
+          </button>
+          <button
+            type="button"
+            className="klimt-drawer-done"
+            onClick={onClose}
+          >
+            Done
+          </button>
+        </>
+      }
+    >
+      {filterContent}
+    </Drawer>
   );
 }

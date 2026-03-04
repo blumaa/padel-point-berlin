@@ -73,6 +73,94 @@ describe("normalizeVenue", () => {
     expect(normalizeVenue("GAME IN TIO TIO ROOFTOP")).toBe("Tio Tio");
   });
 
+  it("maps 4Padel to 4PADEL Berlin", () => {
+    expect(normalizeVenue("4Padel")).toBe("4PADEL Berlin");
+  });
+
+  it("maps 4 PADEL BERLIN to 4PADEL Berlin", () => {
+    expect(normalizeVenue("4 PADEL BERLIN")).toBe("4PADEL Berlin");
+  });
+
+  it("maps WE ARE PADEL to 4PADEL Berlin", () => {
+    expect(normalizeVenue("WE ARE PADEL")).toBe("4PADEL Berlin");
+  });
+
+  it("maps PADEL CITY to PadelCity Berlin", () => {
+    expect(normalizeVenue("PADEL CITY")).toBe("PadelCity Berlin");
+  });
+
+  it("maps PADELCITY BERLIN to PadelCity Berlin", () => {
+    expect(normalizeVenue("PADELCITY BERLIN")).toBe("PadelCity Berlin");
+  });
+
+  it("maps PADELBROS to PadelBros", () => {
+    expect(normalizeVenue("PADELBROS")).toBe("PadelBros");
+  });
+
+  it("maps PADEL BROS to PadelBros", () => {
+    expect(normalizeVenue("PADEL BROS")).toBe("PadelBros");
+  });
+
+  it("maps NEUKOLLN to Padel Neukölln", () => {
+    expect(normalizeVenue("NEUKOLLN")).toBe("Padel Neukölln");
+  });
+
+  it("maps NEUKÖLLN to Padel Neukölln", () => {
+    expect(normalizeVenue("PADEL NEUKÖLLN")).toBe("Padel Neukölln");
+  });
+
+  it("maps BEACH MITTE to BeachMitte", () => {
+    expect(normalizeVenue("BEACH MITTE")).toBe("BeachMitte");
+  });
+
+  it("maps BEACHMITTE to BeachMitte", () => {
+    expect(normalizeVenue("BEACHMITTE")).toBe("BeachMitte");
+  });
+
+  it("maps LANKWITZ to Padel Lankwitz", () => {
+    expect(normalizeVenue("LANKWITZ")).toBe("Padel Lankwitz");
+  });
+
+  it("maps BIRGIT PADEL to Birgit Padel", () => {
+    expect(normalizeVenue("BIRGIT PADEL")).toBe("Birgit Padel");
+  });
+
+  it("maps RAINBOW PADEL to Rainbow Padel", () => {
+    expect(normalizeVenue("RAINBOW PADEL")).toBe("Rainbow Padel");
+  });
+
+  it("maps RAINBOW to Rainbow Padel", () => {
+    expect(normalizeVenue("RAINBOW")).toBe("Rainbow Padel");
+  });
+
+  it("maps LUDWIGSFELDE to Padel Ludwigsfelde", () => {
+    expect(normalizeVenue("LUDWIGSFELDE")).toBe("Padel Ludwigsfelde");
+  });
+
+  it("maps GRENZALLEE to Grenzallee Padel", () => {
+    expect(normalizeVenue("GRENZALLEE")).toBe("Grenzallee Padel");
+  });
+
+  it("maps GRENZALLEE PADEL to Grenzallee Padel", () => {
+    expect(normalizeVenue("GRENZALLEE PADEL")).toBe("Grenzallee Padel");
+  });
+
+  it("maps PADEL MITTE to Padel Mitte", () => {
+    expect(normalizeVenue("PADEL MITTE")).toBe("Padel Mitte");
+  });
+
+  it("maps PADEL WEDDING to Padel Mitte", () => {
+    expect(normalizeVenue("PADEL WEDDING")).toBe("Padel Mitte");
+  });
+
+  it("maps MÜLLERSTRASSE to Padel Mitte", () => {
+    expect(normalizeVenue("MÜLLERSTRASSE")).toBe("Padel Mitte");
+  });
+
+  it("maps WIESENWEG to Padel Berlin", () => {
+    expect(normalizeVenue("WIESENWEG")).toBe("Padel Berlin");
+  });
+
   // ── Unknown venues — prefix stripped but passed through ───────────────────
 
   it("returns prefix-stripped value for unknown venues", () => {

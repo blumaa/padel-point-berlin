@@ -32,7 +32,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.variable}>{children}</body>
+      {/* Runs synchronously before paint to avoid flash-of-wrong-theme */}
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='light'){document.documentElement.classList.add('light');}else if(!t&&window.matchMedia('(prefers-color-scheme: light)').matches){document.documentElement.classList.add('light');}}catch(e){}})();`,
+          }}
+        />
+      </head>
+      <body className={inter.variable}>
+        <a href="#main-content" className="klimt-skip-link">
+          Skip to main content
+        </a>
+        {children}
+      </body>
     </html>
   );
 }

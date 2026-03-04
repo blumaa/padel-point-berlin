@@ -10,8 +10,8 @@ interface MatchListProps {
 export default function MatchList({ matches, isLoading }: MatchListProps) {
   if (isLoading) {
     return (
-      <div className="klimt-loading">
-        <div className="klimt-spinner" />
+      <div className="klimt-loading" role="status" aria-live="polite">
+        <div className="klimt-spinner" aria-hidden="true" />
         <span className="klimt-loading-text">Loading</span>
       </div>
     );
@@ -20,7 +20,7 @@ export default function MatchList({ matches, isLoading }: MatchListProps) {
   if (matches.length === 0) {
     return (
       <div className="klimt-empty">
-        <div className="klimt-empty-icons">
+        <div className="klimt-empty-icons" aria-hidden="true">
           <div className="klimt-empty-icon--accent" />
           <div className="klimt-empty-icon--match" />
           <div className="klimt-empty-triangle" />

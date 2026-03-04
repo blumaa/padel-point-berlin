@@ -17,6 +17,7 @@ export default function DayPicker({ selectedDates, onToggle }: DayPickerProps) {
   });
 
   return (
+    <div className="klimt-day-rail">
     <div className="klimt-day-scroller">
       {days.map((day, i) => {
         const dateStr = formatDate(day);
@@ -29,12 +30,15 @@ export default function DayPicker({ selectedDates, onToggle }: DayPickerProps) {
             key={dateStr}
             onClick={() => onToggle(dateStr)}
             className={`klimt-day${isSelected ? " klimt-day-selected" : ""}`}
+            aria-label={`${label} ${day.toLocaleDateString("en-US", { month: "long", day: "numeric" })}`}
+            aria-pressed={isSelected}
           >
             <span className="klimt-day-label">{label}</span>
             <span className="klimt-day-num">{num}</span>
           </button>
         );
       })}
+    </div>
     </div>
   );
 }

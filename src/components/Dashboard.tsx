@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import DayPicker from "@/components/DayPicker";
-import MatchFilters, { defaultFilters, type FilterState } from "@/components/MatchFilters";
+import MatchFilters, { defaultFilters, CATEGORIES, type FilterState } from "@/components/MatchFilters";
 import MatchList from "@/components/MatchList";
 import { PadelPointBerlin } from "@/app/stage/PadelPointBerlin";
+import LogoOverlay from "@/components/LogoOverlay";
 import Footer from "@/components/Footer";
 import AddMatchModal from "@/components/AddMatchModal";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const TIME_SLOTS = {
   morning:   { start: 6,  end: 11 },
@@ -30,7 +32,10 @@ export default function Dashboard() {
   const [availableVenues, setAvailableVenues] = useState<string[]>([]);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [logoExpanded, setLogoExpanded] = useState(false);
+  const [logoRect, setLogoRect] = useState<DOMRect | null>(null);
   const filterRef = useRef<HTMLDivElement>(null);
+  const logoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -68,7 +73,7 @@ export default function Dashboard() {
       (filters.levelMax ? 1 : 0) +
       (filters.venues.length < availableVenues.length && availableVenues.length > 0 ? 1 : 0) +
       (filters.timeOfDay.length < 3 ? 1 : 0) +
-      (filters.category ? 1 : 0)
+      (filters.category.length < CATEGORIES.length ? 1 : 0)
     );
   }, [filters, availableVenues.length]);
 
@@ -110,7 +115,7 @@ export default function Dashboard() {
         if (!filters.venues.includes(match.venue)) return false;
       }
 
-      if (filters.category && match.category !== filters.category) return false;
+      if (filters.category.length < CATEGORIES.length && !filters.category.includes(match.category)) return false;
 
       return true;
     });
@@ -122,17 +127,68 @@ export default function Dashboard() {
     <div className="klimt-bg">
       <header className="klimt-header">
         <div className="klimt-header-inner">
-          <div className="klimt-logo">
-            <PadelPointBerlin />
+          <div className="klimt-header-left">
+            <div
+              ref={logoRef}
+              className="klimt-logo"
+              onClick={() => {
+                const rect = logoRef.current?.getBoundingClientRect();
+                if (rect) {
+                  setLogoRect(rect);
+                  setLogoExpanded(true);
+                }
+              }}
+              role="button"
+              aria-label="View logo animation"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  const rect = logoRef.current?.getBoundingClientRect();
+                  if (rect) {
+                    setLogoRect(rect);
+                    setLogoExpanded(true);
+                  }
+                }
+              }}
+            >
+              <PadelPointBerlin />
+            </div>
+            <h1 className="klimt-title">Padel Point Berlin</h1>
           </div>
-          <h1 className="klimt-title">Padel Point Berlin</h1>
+          <ThemeToggle />
         </div>
         <div className="klimt-divider" />
       </header>
 
-      <main className="klimt-main">
+      {logoExpanded && logoRect && (
+        <LogoOverlay
+          sourceRect={logoRect}
+          onClose={() => setLogoExpanded(false)}
+        />
+      )}
+
+      <main className="klimt-main" id="main-content">
         <div className="klimt-controls">
           <div className="klimt-controls-left">
+            <div className="klimt-filter-wrapper" ref={filterRef}>
+              <button
+                onClick={() => setIsFiltersOpen((v) => !v)}
+                className="klimt-filter-toggle"
+                aria-expanded={isFiltersOpen}
+              >
+                {`▼ Filters${activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}`}
+              </button>
+              <div className="klimt-filter-dropdown">
+                <MatchFilters
+                  isOpen={isFiltersOpen}
+                  value={filters}
+                  availableVenues={availableVenues}
+                  onFilterChange={setFilters}
+                  onClose={() => setIsFiltersOpen(false)}
+                />
+              </div>
+            </div>
             <button
               onClick={() => setSelectedDates(dates14)}
               disabled={allSelected}
@@ -147,24 +203,6 @@ export default function Dashboard() {
             >
               Clear
             </button>
-          </div>
-          <div className="klimt-filter-wrapper" ref={filterRef}>
-            <button
-              onClick={() => setIsFiltersOpen((v) => !v)}
-              className="klimt-filter-toggle"
-            >
-              {`▼ Filters${activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}`}
-            </button>
-            {isFiltersOpen && (
-              <div className="klimt-filter-dropdown">
-                <MatchFilters
-                  isOpen={isFiltersOpen}
-                  value={filters}
-                  availableVenues={availableVenues}
-                  onFilterChange={setFilters}
-                />
-              </div>
-            )}
           </div>
         </div>
 
