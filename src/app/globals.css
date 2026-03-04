@@ -158,7 +158,13 @@ body {
 .klimt-controls-left {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .klimt-controls-left {
+    gap: 1rem;
+  }
 }
 
 .klimt-btn-select {
@@ -936,6 +942,18 @@ body {
   border-radius: 4px;
 }
 
+.klimt-badge {
+  display: inline-flex;
+  align-items: center;
+  background: var(--surface2);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
 /* ===== CTA Button ===== */
 .klimt-cta {
   display: block;
@@ -1193,6 +1211,11 @@ body {
   width: 100%;
   resize: vertical;
   margin-bottom: 12px;
+}
+
+.klimt-modal-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
 }
 
 .klimt-modal-error {

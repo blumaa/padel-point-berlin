@@ -4,17 +4,11 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 export async function GET() {
   try {
     const supabase = getSupabaseServerClient();
-    const { data, error } = await supabase
-      .from("matches")
-      .select("venue")
-      .gte("match_time", new Date().toISOString())
-      .not("venue", "is", null)
-      .order("venue");
+    const { data, error } = await supabase.rpc("get_upcoming_venues");
 
     if (error) throw error;
 
-    const venues = [...new Set(data.map((r: { venue: string }) => r.venue))].sort();
-    return NextResponse.json(venues);
+    return NextResponse.json(data.map((r: { venue: string }) => r.venue));
   } catch (error) {
     console.error("Failed to fetch venues:", error);
     return NextResponse.json([], { status: 500 });

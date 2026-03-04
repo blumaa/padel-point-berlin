@@ -19,6 +19,7 @@ interface Match {
   level_min: number | null;
   level_max: number | null;
   category: string;
+  indoor: string | null;
   source_group: string | null;
   playtomic_url: string | null;
   match_players: Player[];
@@ -133,7 +134,12 @@ export default function MatchCard({ match, isAlt = false }: MatchCardProps) {
           )}
           <div className="klimt-card-row">
             <span className="klimt-card-day">{dayStr}</span>
-            <span className="klimt-card-time">{timeStr}</span>
+            <div style={{ display: "flex", alignItems: "baseline", gap: "0.4rem" }}>
+              <span className="klimt-card-time">{timeStr}</span>
+              {match.duration_min && (
+                <span className="klimt-card-duration">{match.duration_min} min</span>
+              )}
+            </div>
             <div className="klimt-card-venue-row">
               <span className="klimt-card-venue">{clubName}</span>
               {clubName !== "—" && (
@@ -161,10 +167,13 @@ export default function MatchCard({ match, isAlt = false }: MatchCardProps) {
               <span className="klimt-badge-level">All levels</span>
             )}
             <div className="klimt-badge-details">
-              <span className="klimt-badge-category">{match.category}</span>
-              {match.duration_min && (
-                <span className="klimt-card-duration">
-                  {match.duration_min} min
+              <span className="klimt-badge-category">
+                {match.category === "Women" ? "Women only" : match.category === "Men" ? "Men only" : match.category}
+              </span>
+
+              {(match.indoor === "indoor" || match.indoor === "outdoor") && (
+                <span className={`klimt-badge klimt-badge--${match.indoor}`}>
+                  {match.indoor === "indoor" ? "Indoor" : "Outdoor"}
                 </span>
               )}
             </div>

@@ -26,6 +26,7 @@ export interface FilterState {
   venues: string[];
   timeOfDay: TimeOfDay[];
   category: Category[];
+  indoor: "indoor" | "outdoor" | null;
 }
 
 export const defaultFilters: FilterState = {
@@ -34,6 +35,7 @@ export const defaultFilters: FilterState = {
   venues: [],
   timeOfDay: [...TIME_OF_DAY],
   category: [...CATEGORIES],
+  indoor: null,
 };
 
 interface MatchFiltersProps {
@@ -52,7 +54,6 @@ export default function MatchFilters({
   onClose,
 }: MatchFiltersProps) {
   const [filters, setFilters] = useState<FilterState>(value);
-  const [venuesOpen, setVenuesOpen] = useState(true);
 
   useEffect(() => {
     setFilters(value);
@@ -63,7 +64,8 @@ export default function MatchFilters({
     filters.levelMax !== "" ||
     filters.timeOfDay.length < TIME_OF_DAY.length ||
     filters.category.length < CATEGORIES.length ||
-    filters.venues.length < availableVenues.length;
+    filters.venues.length < availableVenues.length ||
+    filters.indoor !== null;
 
   function handleReset() {
     const reset: FilterState = { ...defaultFilters, venues: availableVenues };
@@ -130,6 +132,12 @@ export default function MatchFilters({
 
   function setVenues(venues: string[]) {
     const next = { ...filters, venues };
+    setFilters(next);
+    onFilterChange(next);
+  }
+
+  function setIndoor(indoor: "indoor" | "outdoor" | null) {
+    const next = { ...filters, indoor };
     setFilters(next);
     onFilterChange(next);
   }
@@ -233,50 +241,53 @@ export default function MatchFilters({
         </div>
       </div>
 
+      {/* Court type */}
+      <div className="klimt-filter-section klimt-filter-section--divided">
+        <span className="klimt-filter-label">Court Type</span>
+        <div className="klimt-filter-pills">
+          {([null, "indoor", "outdoor"] as const).map((opt) => (
+            <button
+              key={String(opt)}
+              type="button"
+              className={`klimt-pill${filters.indoor === opt ? " klimt-pill--active" : ""}`}
+              onClick={() => setIndoor(opt)}
+            >
+              {opt === null ? "All" : opt === "indoor" ? "Indoor" : "Outdoor"}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Venues */}
       {availableVenues.length > 0 && (
         <div className="klimt-filter-section klimt-filter-section--divided">
-          <div className="klimt-filter-venue-header">
+          <span className="klimt-filter-label">Venue</span>
+          <div className="klimt-filter-pills">
             <button
               type="button"
-              onClick={() => setVenuesOpen((v) => !v)}
-              className="klimt-filter-venue-title"
-              aria-expanded={venuesOpen}
+              className={`klimt-pill${filters.venues.length === availableVenues.length ? " klimt-pill--active" : ""}`}
+              onClick={() => setVenues(availableVenues)}
             >
-              Venue {venuesOpen ? "▲" : "▼"}
+              All
             </button>
-            <div className="klimt-filter-venue-actions">
+            <button
+              type="button"
+              className={`klimt-pill${filters.venues.length === 0 ? " klimt-pill--active" : ""}`}
+              onClick={() => setVenues([])}
+            >
+              None
+            </button>
+            {availableVenues.map((venue) => (
               <button
+                key={venue}
                 type="button"
-                onClick={() => setVenues(availableVenues)}
-                className={`klimt-filter-venue-action${filters.venues.length === availableVenues.length ? " klimt-filter-venue-action--inactive" : ""}`}
+                className={`klimt-pill${filters.venues.includes(venue) ? " klimt-pill--active" : ""}`}
+                onClick={() => toggleVenue(venue)}
               >
-                All
+                {venue}
               </button>
-              <button
-                type="button"
-                onClick={() => setVenues([])}
-                className={`klimt-filter-venue-action${filters.venues.length === 0 ? " klimt-filter-venue-action--inactive" : ""}`}
-              >
-                None
-              </button>
-            </div>
+            ))}
           </div>
-          {venuesOpen && (
-            <div className="klimt-filter-venue-list">
-              {availableVenues.map((venue) => (
-                <label key={venue} className="klimt-filter-checkbox-row">
-                  <input
-                    type="checkbox"
-                    checked={filters.venues.includes(venue)}
-                    onChange={() => toggleVenue(venue)}
-                    className="klimt-checkbox"
-                  />
-                  <span className="klimt-filter-checkbox-label">{venue}</span>
-                </label>
-              ))}
-            </div>
-          )}
         </div>
       )}
     </Drawer>

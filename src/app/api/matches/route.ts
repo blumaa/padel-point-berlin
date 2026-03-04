@@ -6,7 +6,7 @@ import { detectFormat } from "@/lib/parser/detectFormat";
 
 export async function POST(request: NextRequest) {
   try {
-    const { body } = await request.json();
+    const { body, indoor } = await request.json();
 
     if (typeof body !== "string" || !body.includes("playtomic.io")) {
       return NextResponse.json(
@@ -49,6 +49,9 @@ export async function POST(request: NextRequest) {
 
     if (rawError) throw rawError;
 
+    if (indoor === "indoor" || indoor === "outdoor") {
+      parsed.indoor = indoor;
+    }
     await upsertMatch(supabase, parsed, rawRow.id, "manual");
 
     return NextResponse.json({ success: true });
@@ -79,6 +82,7 @@ export async function GET(request: NextRequest) {
       : undefined,
     venues: searchParams.get("venues")?.split(",").filter(Boolean) || undefined,
     category: searchParams.get("category") || undefined,
+    indoor: (searchParams.get("indoor") as "indoor" | "outdoor" | null) || undefined,
   };
 
   try {

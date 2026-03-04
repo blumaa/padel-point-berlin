@@ -65,7 +65,8 @@ export default function Dashboard() {
       (filters.levelMax ? 1 : 0) +
       (filters.venues.length < availableVenues.length && availableVenues.length > 0 ? 1 : 0) +
       (filters.timeOfDay.length < 3 ? 1 : 0) +
-      (filters.category.length < CATEGORIES.length ? 1 : 0)
+      (filters.category.length < CATEGORIES.length ? 1 : 0) +
+      (filters.indoor !== null ? 1 : 0)
     );
   }, [filters, availableVenues.length]);
 
@@ -108,6 +109,8 @@ export default function Dashboard() {
       }
 
       if (filters.category.length < CATEGORIES.length && !filters.category.includes(match.category)) return false;
+
+      if (filters.indoor !== null && match.indoor !== filters.indoor) return false;
 
       return true;
     });

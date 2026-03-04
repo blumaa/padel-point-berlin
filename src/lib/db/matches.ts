@@ -5,7 +5,7 @@ import { normalizeVenue } from "@/lib/parser/normalizeVenue";
 export async function upsertMatch(
   supabase: SupabaseClient,
   match: ParsedMatch,
-  rawMessageId: string,
+  rawMessageId: string | null,
   sourceGroup: string,
   communityName?: string | null
 ) {
@@ -25,6 +25,7 @@ export async function upsertMatch(
         category: match.category,
         source_group: sourceGroup,
         playtomic_url: match.playtomicUrl,
+        indoor: match.indoor ?? null,
       },
       { onConflict: "playtomic_id" }
     )
@@ -81,6 +82,7 @@ export interface MatchQuery {
   levelMax?: number;
   venues?: string[];
   category?: string;
+  indoor?: "indoor" | "outdoor" | null;
 }
 
 export async function getUpcomingMatches(
@@ -91,7 +93,8 @@ export async function getUpcomingMatches(
     .from("matches")
     .select("*, match_players(*)")
     .gte("match_time", new Date().toISOString())
-    .order("match_time", { ascending: true });
+    .order("match_time", { ascending: true })
+    .limit(5000);
 
   if (query.dates && query.dates.length > 0) {
     const allSlots = Object.keys(TIME_SLOTS) as (keyof typeof TIME_SLOTS)[];
@@ -123,6 +126,10 @@ export async function getUpcomingMatches(
 
   if (query.category) {
     q = q.eq("category", query.category);
+  }
+
+  if (query.indoor != null) {
+    q = q.eq("indoor", query.indoor);
   }
 
   const { data, error } = await q;

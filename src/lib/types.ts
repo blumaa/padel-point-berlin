@@ -21,6 +21,7 @@ export interface ParsedMatch {
   levelMax: number | null;
   category: MatchCategory;
   players: Player[];
+  indoor?: "indoor" | "outdoor" | null;
 }
 
 export type MessageFormat = "formatA" | "formatB" | "formatC";
