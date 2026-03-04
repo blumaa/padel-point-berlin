@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import DayPicker from "@/components/DayPicker";
 import MatchFilters, { defaultFilters, CATEGORIES, type FilterState } from "@/components/MatchFilters";
+import type { Match, MatchCategory } from "@/lib/types";
 import MatchList from "@/components/MatchList";
 import { PadelPointBerlin } from "@/components/PadelPointBerlin";
 import LogoOverlay from "@/components/LogoOverlay";
@@ -39,7 +40,7 @@ export default function Dashboard() {
   const [logoRect, setLogoRect] = useState<DOMRect | null>(null);
   const logoRef = useRef<HTMLDivElement>(null);
 
-  const [matches, setMatches] = useState<any[]>([]);
+  const [matches, setMatches] = useState<Match[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -109,10 +110,10 @@ export default function Dashboard() {
       }
 
       if (availableVenues.length > 0 && filters.venues.length < availableVenues.length) {
-        if (!filters.venues.includes(match.venue)) return false;
+        if (!match.venue || !filters.venues.includes(match.venue)) return false;
       }
 
-      if (filters.category.length < CATEGORIES.length && !filters.category.includes(match.category)) return false;
+      if (filters.category.length < CATEGORIES.length && !filters.category.includes(match.category as MatchCategory)) return false;
 
       if (filters.indoor !== null && match.indoor !== filters.indoor) return false;
       if (filters.competitionMode !== null && match.competition_mode !== filters.competitionMode) return false;

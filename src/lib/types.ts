@@ -26,3 +26,31 @@ export interface ParsedMatch {
 }
 
 export type MessageFormat = "formatA" | "formatB" | "formatC";
+
+/** Shape returned by Supabase for a match row with match_players joined. */
+export interface MatchPlayer {
+  id: string;
+  match_id: string;
+  name: string;
+  level: number | null;
+  status: string;
+  slot_order: number;
+}
+
+export interface Match {
+  id: string;
+  title: string;
+  match_type: string;
+  match_time: string;
+  duration_min: number | null;
+  venue: string | null;
+  level_min: number | null;
+  level_max: number | null;
+  category: string;
+  indoor: string | null;
+  competition_mode: string | null;
+  source_group: string | null;
+  playtomic_url: string | null;
+  created_at: string;
+  match_players: MatchPlayer[];
+}

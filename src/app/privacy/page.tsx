@@ -29,7 +29,7 @@ export default function PrivacyPage() {
         <section className="klimt-privacy-section">
           <h2 className="klimt-privacy-heading">2. What data we collect</h2>
           <p className="klimt-privacy-text">
-            We read match announcements posted in WhatsApp padel groups in Berlin. From each message we extract:
+            We fetch matches from the Playtomic API. From each match we store:
           </p>
           <ul className="klimt-privacy-list">
             <li>Match date, time, venue, and duration</li>
@@ -39,8 +39,8 @@ export default function PrivacyPage() {
           </ul>
           <p className="klimt-privacy-text">
             <strong>Player names are never displayed.</strong>{" "}
-            Participants are shown only as "Player 1", "Player 2", etc. Sender phone numbers are stored temporarily
-            for technical purposes and never shown to users.
+            Participants are shown only as an anonymous icon with their skill level.
+            No contact details or personal identifiers are stored.
           </p>
         </section>
 

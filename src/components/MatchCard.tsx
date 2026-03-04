@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { memo, useState, useEffect } from "react";
 
 interface Player {
   name: string;
@@ -73,7 +73,7 @@ interface MatchCardProps {
   isAlt?: boolean;
 }
 
-export default function MatchCard({ match, isAlt = false }: MatchCardProps) {
+function MatchCard({ match, isAlt = false }: MatchCardProps) {
   const [isViewed, setIsViewed] = useState(false);
 
   useEffect(() => {
@@ -264,3 +264,5 @@ export default function MatchCard({ match, isAlt = false }: MatchCardProps) {
     </div>
   );
 }
+
+export default memo(MatchCard);

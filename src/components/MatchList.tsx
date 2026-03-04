@@ -1,9 +1,10 @@
 "use client";
 
+import type { Match } from "@/lib/types";
 import MatchCard from "./MatchCard";
 
 interface MatchListProps {
-  matches: any[];
+  matches: Match[];
   isLoading: boolean;
 }
 

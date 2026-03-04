@@ -941,9 +941,9 @@ body {
   background: var(--surface2);
   color: var(--text-muted);
   border: 1px solid var(--border);
-  font-size: 0.78rem;
+  font-size: 0.68rem;
   font-weight: 500;
-  padding: 2px 8px;
+  padding: 2px 6px;
   border-radius: 4px;
 }
 
@@ -953,9 +953,9 @@ body {
   background: var(--surface2);
   color: var(--text-muted);
   border: 1px solid var(--border);
-  font-size: 0.78rem;
+  font-size: 0.68rem;
   font-weight: 500;
-  padding: 2px 8px;
+  padding: 2px 6px;
   border-radius: 4px;
 }
 

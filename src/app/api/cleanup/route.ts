@@ -11,8 +11,8 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
  * Protected by a shared secret so it can't be triggered publicly.
  */
 export async function GET(request: NextRequest) {
-  const secret = request.headers.get("x-cron-secret");
-  if (secret !== process.env.CRON_SECRET) {
+  const secret = request.headers.get("authorization");
+  if (secret !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

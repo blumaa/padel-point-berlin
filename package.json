@@ -7,8 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "type-check": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
+    "test:ci": "jest --coverage --ci",
     "listener": "tsx --env-file=.env.local listener/index.ts",
     "replay": "tsx --env-file=.env.local listener/replay.ts",
     "fetch-recent": "tsx --env-file=.env.local listener/fetch-recent.ts"
