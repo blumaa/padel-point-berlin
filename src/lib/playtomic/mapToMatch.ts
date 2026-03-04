@@ -2,12 +2,9 @@ import type { ParsedMatch, MatchCategory } from "@/lib/types";
 import type { PlaytomicMatch } from "./types";
 
 function parseBerlinDatetime(s: string): Date {
-  const fakeUtc = new Date(s + "Z");
-  const berlinAsUtcStr = fakeUtc
-    .toLocaleString("sv-SE", { timeZone: "Europe/Berlin" })
-    .replace(" ", "T") + "Z";
-  const offset = new Date(berlinAsUtcStr).getTime() - fakeUtc.getTime();
-  return new Date(fakeUtc.getTime() - offset);
+  // Playtomic API returns UTC timestamps without a timezone designator.
+  // Appending "Z" tells JS to treat it as UTC.
+  return new Date(s + "Z");
 }
 
 function mapGender(gender: string | null): MatchCategory {

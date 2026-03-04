@@ -44,16 +44,16 @@ function makeMatch(overrides: Partial<PlaytomicMatch> = {}): PlaytomicMatch {
 
 describe("mapToMatch", () => {
   describe("timezone conversion", () => {
-    it("converts CET (winter) time correctly: 14:00 Berlin = 13:00 UTC", () => {
+    it("treats Playtomic timestamps as UTC: 14:00 UTC stays 14:00 UTC", () => {
       const m = makeMatch({ start_date: "2026-03-18T14:00:00", end_date: "2026-03-18T15:30:00" });
       const result = mapToMatch(m);
-      expect(result.matchTime.toISOString()).toBe("2026-03-18T13:00:00.000Z");
+      expect(result.matchTime.toISOString()).toBe("2026-03-18T14:00:00.000Z");
     });
 
-    it("converts CEST (summer) time correctly: 18:00 Berlin = 16:00 UTC", () => {
+    it("treats Playtomic timestamps as UTC regardless of season: 18:00 UTC stays 18:00 UTC", () => {
       const m = makeMatch({ start_date: "2026-07-15T18:00:00", end_date: "2026-07-15T19:30:00" });
       const result = mapToMatch(m);
-      expect(result.matchTime.toISOString()).toBe("2026-07-15T16:00:00.000Z");
+      expect(result.matchTime.toISOString()).toBe("2026-07-15T18:00:00.000Z");
     });
   });
 
