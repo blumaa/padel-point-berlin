@@ -202,6 +202,36 @@ body {
   padding-bottom: 0.25rem;
 }
 
+/* ===== Sort toggle ===== */
+.klimt-sort-toggle {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 5px 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition:
+    border-color 0.1s,
+    color 0.1s;
+  white-space: nowrap;
+}
+
+.klimt-sort-toggle:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.klimt-sort-toggle--active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
 /* ===== Filter button ===== */
 .klimt-filter-toggle {
   background: transparent;
