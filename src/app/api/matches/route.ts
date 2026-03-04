@@ -21,8 +21,15 @@ export async function POST(request: NextRequest) {
       const msg =
         format === "formatC"
           ? "Message format not recognised. Paste the full WhatsApp match message including emojis (📅📊✅⚪) and the Playtomic link."
-          : "Could not extract match details. Make sure the message includes date, time, level, player list, and a Playtomic link.";
+          : "Could not extract match details. Make sure the message includes date, time, venue, level, player list, and a Playtomic link.";
       return NextResponse.json({ error: msg }, { status: 422 });
+    }
+
+    if (!parsed.venue) {
+      return NextResponse.json(
+        { error: "Could not determine the venue. Make sure the message title includes the location (e.g. \"MATCH IN PADEL FC\")." },
+        { status: 422 }
+      );
     }
 
     const supabase = getSupabaseServerClient();

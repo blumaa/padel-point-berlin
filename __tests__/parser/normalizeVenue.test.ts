@@ -9,6 +9,18 @@ describe("normalizeVenue", () => {
     expect(normalizeVenue("")).toBeNull();
   });
 
+  it("returns null for bare MATCH (no venue info)", () => {
+    expect(normalizeVenue("MATCH")).toBeNull();
+  });
+
+  it("returns null for bare GAME", () => {
+    expect(normalizeVenue("GAME")).toBeNull();
+  });
+
+  it("returns null for bare PARTIDO", () => {
+    expect(normalizeVenue("PARTIDO")).toBeNull();
+  });
+
   // ── Prefix stripping ──────────────────────────────────────────────────────
 
   it("strips MATCH IN prefix", () => {

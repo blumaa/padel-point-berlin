@@ -38,9 +38,13 @@ const VENUE_ALIASES: Array<{ pattern: RegExp; canonical: string }> = [
   { pattern: /wiesenweg/i,                             canonical: "Padel Berlin" },
 ];
 
+// Bare action words with no venue info — treat as no venue
+const BARE_ACTIONS = /^(?:match|game|partido|juego)$/i;
+
 export function normalizeVenue(raw: string | null): string | null {
   if (!raw) return null;
   const stripped = stripPrefix(raw);
+  if (!stripped || BARE_ACTIONS.test(stripped)) return null;
   for (const { pattern, canonical } of VENUE_ALIASES) {
     if (pattern.test(stripped)) return canonical;
   }

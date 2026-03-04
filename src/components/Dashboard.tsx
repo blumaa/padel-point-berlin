@@ -34,18 +34,7 @@ export default function Dashboard() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [logoExpanded, setLogoExpanded] = useState(false);
   const [logoRect, setLogoRect] = useState<DOMRect | null>(null);
-  const filterRef = useRef<HTMLDivElement>(null);
   const logoRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
-        setIsFiltersOpen(false);
-      }
-    }
-    if (isFiltersOpen) document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isFiltersOpen]);
 
   const [matches, setMatches] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -172,24 +161,20 @@ export default function Dashboard() {
         <div className="klimt-sticky-zone">
         <div className="klimt-controls">
           <div className="klimt-controls-left">
-            <div className="klimt-filter-wrapper" ref={filterRef}>
-              <button
-                onClick={() => setIsFiltersOpen((v) => !v)}
-                className={`klimt-filter-toggle${activeFilterCount > 0 ? " klimt-filter-toggle--active" : ""}`}
-                aria-expanded={isFiltersOpen}
-              >
-                {`Filters${activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}`}
-              </button>
-              <div className="klimt-filter-dropdown">
-                <MatchFilters
-                  isOpen={isFiltersOpen}
-                  value={filters}
-                  availableVenues={availableVenues}
-                  onFilterChange={setFilters}
-                  onClose={() => setIsFiltersOpen(false)}
-                />
-              </div>
-            </div>
+            <button
+              onClick={() => setIsFiltersOpen((v) => !v)}
+              className={`klimt-filter-toggle${activeFilterCount > 0 ? " klimt-filter-toggle--active" : ""}`}
+              aria-expanded={isFiltersOpen}
+            >
+              {`Filters${activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}`}
+            </button>
+            <MatchFilters
+              isOpen={isFiltersOpen}
+              value={filters}
+              availableVenues={availableVenues}
+              onFilterChange={setFilters}
+              onClose={() => setIsFiltersOpen(false)}
+            />
             <button
               onClick={() => setSelectedDates(dates14)}
               disabled={allSelected}

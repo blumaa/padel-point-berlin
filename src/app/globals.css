@@ -202,11 +202,7 @@ body {
   padding-bottom: 0.25rem;
 }
 
-/* ===== Filter button & dropdown ===== */
-.klimt-filter-wrapper {
-  position: relative;
-}
-
+/* ===== Filter button ===== */
 .klimt-filter-toggle {
   background: transparent;
   border: 1px solid var(--border);
@@ -232,28 +228,6 @@ body {
   background: var(--accent-dim);
 }
 
-.klimt-filter-dropdown {
-  position: absolute;
-  left: 0;
-  top: 100%;
-  margin-top: 0.5rem;
-  z-index: 50;
-  width: 18rem;
-}
-
-/* ===== Filter panel ===== */
-.klimt-filter-panel {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  transition:
-    background-color 0.25s ease,
-    border-color 0.25s ease;
-}
 
 .klimt-filter-label {
   font-size: 0.75rem;

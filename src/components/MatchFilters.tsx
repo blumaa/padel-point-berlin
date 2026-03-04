@@ -53,18 +53,7 @@ export default function MatchFilters({
 }: MatchFiltersProps) {
   const [filters, setFilters] = useState<FilterState>(value);
   const [venuesOpen, setVenuesOpen] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
 
-  // SSR-safe mobile detection
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 639px)");
-    setIsMobile(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
-
-  // Sync external value changes into local filter state
   useEffect(() => {
     setFilters(value);
   }, [value]);
@@ -145,16 +134,37 @@ export default function MatchFilters({
     onFilterChange(next);
   }
 
-  const filterContent = (
-    <>
+  return (
+    <Drawer
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Filters"
+      actions={
+        <>
+          <button
+            type="button"
+            className="klimt-drawer-reset"
+            onClick={handleReset}
+            disabled={!isFiltered}
+          >
+            Reset
+          </button>
+          <button
+            type="button"
+            className="klimt-drawer-done"
+            onClick={onClose}
+          >
+            Done
+          </button>
+        </>
+      }
+    >
       {/* Level */}
       <div className="klimt-filter-section">
         <span className="klimt-filter-label">Level</span>
         <div className="klimt-filter-level-row">
           <div className="klimt-filter-level-field">
-            <label className="klimt-filter-sublabel" htmlFor="levelMin">
-              From
-            </label>
+            <label className="klimt-filter-sublabel" htmlFor="levelMin">From</label>
             <input
               id="levelMin"
               type="number"
@@ -171,9 +181,7 @@ export default function MatchFilters({
           </div>
           <span className="klimt-filter-level-sep">—</span>
           <div className="klimt-filter-level-field">
-            <label className="klimt-filter-sublabel" htmlFor="levelMax">
-              To
-            </label>
+            <label className="klimt-filter-sublabel" htmlFor="levelMax">To</label>
             <input
               id="levelMax"
               type="number"
@@ -271,42 +279,6 @@ export default function MatchFilters({
           )}
         </div>
       )}
-    </>
-  );
-
-  // Desktop: render inline panel
-  if (!isMobile) {
-    if (!isOpen) return null;
-    return <div className="klimt-filter-panel">{filterContent}</div>;
-  }
-
-  // Mobile: bottom drawer via reusable Drawer component
-  return (
-    <Drawer
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Filters"
-      actions={
-        <>
-          <button
-            type="button"
-            className="klimt-drawer-reset"
-            onClick={handleReset}
-            disabled={!isFiltered}
-          >
-            Reset
-          </button>
-          <button
-            type="button"
-            className="klimt-drawer-done"
-            onClick={onClose}
-          >
-            Done
-          </button>
-        </>
-      }
-    >
-      {filterContent}
     </Drawer>
   );
 }

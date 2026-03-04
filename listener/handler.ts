@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { parseMessage } from "../src/lib/parser/parseMessage";
+import { normalizeVenue } from "../src/lib/parser/normalizeVenue";
 import { insertRawMessage, markProcessed } from "../src/lib/db/rawMessages";
 import { upsertMatch } from "../src/lib/db/matches";
 
@@ -56,6 +57,12 @@ export async function handleMessage(
 
   if (!parsed) {
     await markProcessed(supabase, rawId, "Could not parse message");
+    return;
+  }
+
+  const effectiveVenue = parsed.venue ?? normalizeVenue(message.communityName ?? null);
+  if (!effectiveVenue) {
+    await markProcessed(supabase, rawId, "No venue could be determined");
     return;
   }
 
