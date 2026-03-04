@@ -149,7 +149,7 @@ describe("mapToMatch", () => {
   describe("playtomicUrl", () => {
     it("builds URL from match_id", () => {
       const m = makeMatch({ match_id: "xyz789" });
-      expect(mapToMatch(m).playtomicUrl).toBe("https://app.playtomic.io/match/xyz789");
+      expect(mapToMatch(m).playtomicUrl).toBe("https://app.playtomic.io/matches/xyz789");
     });
   });
 

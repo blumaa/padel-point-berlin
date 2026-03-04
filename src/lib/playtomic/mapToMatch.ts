@@ -57,7 +57,7 @@ export function mapToMatch(m: PlaytomicMatch): ParsedMatch {
 
   return {
     playtomicId: m.match_id,
-    playtomicUrl: `https://app.playtomic.io/match/${m.match_id}`,
+    playtomicUrl: `https://app.playtomic.io/matches/${m.match_id}`,
     title: m.location,
     matchType: "match",
     matchTime,
