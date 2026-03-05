@@ -649,7 +649,7 @@ body {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
-  width: 44px;
+  width: 48px;
   padding: 6px 4px;
   display: flex;
   flex-direction: column;
@@ -688,9 +688,8 @@ body {
 }
 
 .klimt-day-weather {
-  font-size: 18px;
   line-height: 1;
-  height: 16px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;

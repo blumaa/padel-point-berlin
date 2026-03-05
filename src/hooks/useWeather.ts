@@ -2,24 +2,29 @@
 
 import { useState, useEffect } from "react";
 
-/** WMO weather code → emoji */
-function weatherCodeToEmoji(code: number): string {
-  if (code === 0) return "☀️";
-  if (code <= 3) return "⛅";
-  if (code <= 48) return "🌫️";
-  if (code <= 55) return "🌦️";
-  if (code <= 57) return "🌧️";
-  if (code <= 65) return "🌧️";
-  if (code <= 67) return "🧊";
-  if (code <= 75) return "🌨️";
-  if (code <= 77) return "🌨️";
-  if (code <= 82) return "🌧️";
-  if (code <= 86) return "🌨️";
-  if (code <= 99) return "⛈️";
-  return "❓";
+export type WeatherType = "sunny" | "partly-cloudy" | "foggy" | "drizzle" | "rainy" | "freezing-rain" | "snowy" | "thunderstorm";
+
+function weatherCodeToType(code: number): WeatherType {
+  if (code === 0) return "sunny";
+  if (code <= 3) return "partly-cloudy";
+  if (code <= 48) return "foggy";
+  if (code <= 55) return "drizzle";
+  if (code <= 57) return "freezing-rain";
+  if (code <= 65) return "rainy";
+  if (code <= 67) return "freezing-rain";
+  if (code <= 77) return "snowy";
+  if (code <= 82) return "rainy";
+  if (code <= 86) return "snowy";
+  if (code <= 99) return "thunderstorm";
+  return "partly-cloudy";
 }
 
-export type WeatherMap = Record<string, string>;
+export interface WeatherDay {
+  type: WeatherType;
+  temp: number;
+}
+
+export type WeatherMap = Record<string, WeatherDay>;
 
 export function useWeather(): { weather: WeatherMap; isLoading: boolean } {
   const [weather, setWeather] = useState<WeatherMap>({});
@@ -28,13 +33,14 @@ export function useWeather(): { weather: WeatherMap; isLoading: boolean } {
   useEffect(() => {
     fetch("/api/weather")
       .then((r) => r.json())
-      .then((data: { daily?: { time?: string[]; weather_code?: number[] } }) => {
+      .then((data: { daily?: { time?: string[]; weather_code?: number[]; temperature_2m_max?: number[] } }) => {
         const times = data.daily?.time;
         const codes = data.daily?.weather_code;
-        if (!times || !codes) return;
+        const temps = data.daily?.temperature_2m_max;
+        if (!times || !codes || !temps) return;
         const map: WeatherMap = {};
         times.forEach((date, i) => {
-          map[date] = weatherCodeToEmoji(codes[i]);
+          map[date] = { type: weatherCodeToType(codes[i]), temp: Math.round(temps[i]) };
         });
         setWeather(map);
       })

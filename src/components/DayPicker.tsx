@@ -1,6 +1,7 @@
 "use client";
 
 import type { WeatherMap } from "@/hooks/useWeather";
+import WeatherIcon from "@/components/WeatherIcon";
 
 interface DayPickerProps {
   selectedDates: string[];
@@ -42,9 +43,9 @@ export default function DayPicker({ selectedDates, onToggle, weather, weatherLoa
             <span className="klimt-day-weather">
               {weatherLoading ? (
                 <span className="klimt-day-weather-skeleton" />
-              ) : (
-                weather[dateStr] ?? ""
-              )}
+              ) : weather[dateStr] ? (
+                <WeatherIcon type={weather[dateStr].type} temp={weather[dateStr].temp} />
+              ) : null}
             </span>
           </button>
         );
