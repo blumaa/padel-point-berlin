@@ -33,10 +33,10 @@ export function useWeather(): { weather: WeatherMap; isLoading: boolean } {
   useEffect(() => {
     fetch("/api/weather")
       .then((r) => r.json())
-      .then((data: { daily?: { time?: string[]; weather_code?: number[]; temperature_2m_max?: number[] } }) => {
+      .then((data: { daily?: { time?: string[]; weather_code?: number[]; daylight_temp?: number[] } }) => {
         const times = data.daily?.time;
         const codes = data.daily?.weather_code;
-        const temps = data.daily?.temperature_2m_max;
+        const temps = data.daily?.daylight_temp;
         if (!times || !codes || !temps) return;
         const map: WeatherMap = {};
         times.forEach((date, i) => {
