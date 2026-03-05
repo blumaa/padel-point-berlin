@@ -1,15 +1,19 @@
 "use client";
 
+import type { WeatherMap } from "@/hooks/useWeather";
+
 interface DayPickerProps {
   selectedDates: string[];
   onToggle: (date: string) => void;
+  weather: WeatherMap;
+  weatherLoading: boolean;
 }
 
 function formatDate(date: Date): string {
   return date.toISOString().split("T")[0];
 }
 
-export default function DayPicker({ selectedDates, onToggle }: DayPickerProps) {
+export default function DayPicker({ selectedDates, onToggle, weather, weatherLoading }: DayPickerProps) {
   const days = Array.from({ length: 14 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() + i);
@@ -35,6 +39,13 @@ export default function DayPicker({ selectedDates, onToggle }: DayPickerProps) {
           >
             <span className="klimt-day-label">{label}</span>
             <span className="klimt-day-num">{num}</span>
+            <span className="klimt-day-weather">
+              {weatherLoading ? (
+                <span className="klimt-day-weather-skeleton" />
+              ) : (
+                weather[dateStr] ?? ""
+              )}
+            </span>
           </button>
         );
       })}

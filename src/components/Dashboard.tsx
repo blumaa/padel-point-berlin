@@ -11,6 +11,7 @@ import Footer from "@/components/Footer";
 import AddMatchModal from "@/components/AddMatchModal";
 import ThemeToggle from "@/components/ThemeToggle";
 import { sortMatches } from "@/lib/sortMatches";
+import { useWeather } from "@/hooks/useWeather";
 
 const TIME_SLOTS = {
   morning:   { start: 6,  end: 11 },
@@ -77,6 +78,7 @@ export default function Dashboard() {
 
   const [matches, setMatches] = useState<Match[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { weather, isLoading: weatherLoading } = useWeather();
 
   // Persist state to localStorage
   useEffect(() => {
@@ -302,7 +304,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <DayPicker selectedDates={selectedDates} onToggle={toggleDate} />
+        <DayPicker selectedDates={selectedDates} onToggle={toggleDate} weather={weather} weatherLoading={weatherLoading} />
         </div>
 
         {!isLoading && (
