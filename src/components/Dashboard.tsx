@@ -243,6 +243,7 @@ export default function Dashboard() {
           <div className="klimt-controls-left">
             <button
               onClick={() => setIsFiltersOpen((v) => !v)}
+              disabled={isLoading}
               className={`klimt-filter-toggle${activeFilterCount > 0 ? " klimt-filter-toggle--active" : ""}`}
               aria-expanded={isFiltersOpen}
             >
@@ -257,14 +258,14 @@ export default function Dashboard() {
             />
             <button
               onClick={() => setSelectedDates(dates14)}
-              disabled={allSelected}
+              disabled={isLoading || allSelected}
               className="klimt-btn-select"
             >
               Select all
             </button>
             <button
               onClick={() => setSelectedDates([])}
-              disabled={selectedDates.length === 0}
+              disabled={isLoading || selectedDates.length === 0}
               className="klimt-btn-clear"
             >
               Clear
