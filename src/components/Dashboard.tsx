@@ -156,8 +156,11 @@ export default function Dashboard() {
     if (selectedDates.length === 0 || filters.timeOfDay.length === 0) return [];
     if (availableVenues.length > 0 && filters.venues.length === 0) return [];
 
+    const twoHoursFromNow = Date.now() + 2 * 60 * 60 * 1000;
+
     return matches.filter((match) => {
       const t = new Date(match.match_time);
+      if (t.getTime() < twoHoursFromNow) return false;
       const dateStr = t.toISOString().split("T")[0];
       if (!selectedDates.includes(dateStr)) return false;
 
