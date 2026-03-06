@@ -1172,6 +1172,13 @@ body {
   color: var(--text);
 }
 
+.klimt-footer-update {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  opacity: 0.6;
+  margin-top: 0.25rem;
+}
+
 /* ===== Modal ===== */
 .klimt-modal-backdrop {
   position: fixed;

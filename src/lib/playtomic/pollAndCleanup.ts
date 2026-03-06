@@ -2,6 +2,7 @@ import { fetchBerlinVenues, fetchOpenMatches } from "./client";
 import { mapToMatch } from "./mapToMatch";
 import { upsertMatch } from "@/lib/db/matches";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import { updatePollStatus } from "@/lib/db/pollStatus";
 
 export async function pollAndCleanup() {
   const supabase = getSupabaseAdminClient();
@@ -69,11 +70,15 @@ export async function pollAndCleanup() {
     stale = deleted ?? 0;
   }
 
-  return {
+  const result = {
     ok: true,
     expired: expired ?? 0,
     upserted,
     stale: stale ?? 0,
     errors,
   };
+
+  await updatePollStatus(supabase, result);
+
+  return result;
 }

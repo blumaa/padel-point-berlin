@@ -6,6 +6,7 @@ const mockFetchBerlinVenues = jest.fn<Promise<PlaytomicTenant[]>, []>();
 const mockFetchOpenMatches = jest.fn<Promise<PlaytomicMatch[]>, [string, string]>();
 const mockMapToMatch = jest.fn();
 const mockUpsertMatch = jest.fn();
+const mockUpdatePollStatus = jest.fn();
 
 jest.mock("@/lib/playtomic/client", () => ({
   fetchBerlinVenues: (...args: []) => mockFetchBerlinVenues(...args),
@@ -20,38 +21,67 @@ jest.mock("@/lib/db/matches", () => ({
   upsertMatch: (...args: unknown[]) => mockUpsertMatch(...args),
 }));
 
+jest.mock("@/lib/db/pollStatus", () => ({
+  updatePollStatus: (...args: unknown[]) => mockUpdatePollStatus(...args),
+}));
+
 // Supabase chainable query builder mock
+// Each .from() call returns a fresh chain that tracks its own operation type.
 function makeSupaMock({
   expiredCount = 0,
   staleCount = 0,
-}: { expiredCount?: number; staleCount?: number } = {}) {
-  // Track which delete call we're on (first = expired, second = stale)
+  existingRows = [] as { id: string; playtomic_id: string }[],
+}: {
+  expiredCount?: number;
+  staleCount?: number;
+  existingRows?: { id: string; playtomic_id: string }[];
+} = {}) {
   let deleteCallCount = 0;
 
-  const chain = {
-    from: jest.fn().mockReturnThis(),
-    delete: jest.fn().mockImplementation(() => {
-      deleteCallCount++;
-      chain._deleteCall = deleteCallCount;
-      return chain;
-    }),
-    eq: jest.fn().mockReturnThis(),
-    gt: jest.fn().mockReturnThis(),
-    lt: jest.fn().mockReturnThis(),
-    not: jest.fn().mockReturnThis(),
-    insert: jest.fn().mockReturnThis(),
-    upsert: jest.fn().mockReturnThis(),
-    select: jest.fn().mockReturnThis(),
-    single: jest.fn().mockReturnThis(),
-    _deleteCall: 0,
-    // Resolves when awaited — return count based on which delete it is
-    then: jest.fn().mockImplementation((resolve: (v: unknown) => void) => {
-      resolve({ count: chain._deleteCall === 1 ? expiredCount : staleCount, error: null });
-      return Promise.resolve();
-    }),
+  function makeChain() {
+    let isSelect = false;
+    let isDelete = false;
+    let currentDeleteNum = 0;
+
+    const chain: Record<string, jest.Mock> & { then: jest.Mock } = {
+      delete: jest.fn().mockImplementation(() => {
+        isDelete = true;
+        deleteCallCount++;
+        currentDeleteNum = deleteCallCount;
+        return chain;
+      }),
+      select: jest.fn().mockImplementation(() => {
+        isSelect = true;
+        return chain;
+      }),
+      eq: jest.fn().mockReturnThis(),
+      gt: jest.fn().mockReturnThis(),
+      lt: jest.fn().mockReturnThis(),
+      in: jest.fn().mockReturnThis(),
+      insert: jest.fn().mockReturnThis(),
+      upsert: jest.fn().mockReturnThis(),
+      single: jest.fn().mockReturnThis(),
+      then: jest.fn().mockImplementation((resolve: (v: unknown) => void) => {
+        if (isSelect) {
+          resolve({ data: existingRows, error: null });
+        } else if (isDelete) {
+          const count = currentDeleteNum === 1 ? expiredCount : staleCount;
+          resolve({ count, error: null });
+        } else {
+          resolve({ error: null });
+        }
+        return Promise.resolve();
+      }),
+    };
+    return chain;
+  }
+
+  const mock = {
+    from: jest.fn().mockImplementation(() => makeChain()),
+    _getDeleteCallCount: () => deleteCallCount,
   };
 
-  return chain;
+  return mock;
 }
 
 jest.mock("@/lib/supabase/admin", () => ({
@@ -96,6 +126,7 @@ describe("pollAndCleanup", () => {
     supabaseMock = makeSupaMock();
     mockMapToMatch.mockReturnValue({ playtomicId: "match-1" });
     mockUpsertMatch.mockResolvedValue(undefined);
+    mockUpdatePollStatus.mockResolvedValue(undefined);
   });
 
   it("upserts valid matches and returns correct counts", async () => {
@@ -152,9 +183,14 @@ describe("pollAndCleanup", () => {
   });
 
   it("removes a canceled match that was previously in the DB", async () => {
-    supabaseMock = makeSupaMock({ staleCount: 1 });
+    supabaseMock = makeSupaMock({
+      staleCount: 1,
+      existingRows: [
+        { id: "db-1", playtomic_id: "match-now-canceled" },
+        { id: "db-2", playtomic_id: "match-valid" },
+      ],
+    });
     mockFetchBerlinVenues.mockResolvedValue([venue]);
-    // API returns the match as canceled — it won't be in validPlaytomicIds
     mockFetchOpenMatches.mockResolvedValue([
       { ...makePlaytomicMatch("match-now-canceled", 2, 4), status: "CANCELED" },
       makePlaytomicMatch("match-valid", 2, 4),
@@ -163,18 +199,21 @@ describe("pollAndCleanup", () => {
     const { pollAndCleanup } = await import("@/lib/playtomic/pollAndCleanup");
     const result = await pollAndCleanup();
 
-    expect(result.upserted).toBe(1); // only the valid match
-    expect(result.stale).toBe(1);    // canceled match deleted from DB
-    expect(supabaseMock.not).toHaveBeenCalledWith(
-      "playtomic_id", "in", expect.not.stringContaining("match-now-canceled")
-    );
+    expect(result.upserted).toBe(1);
+    expect(result.stale).toBe(1);
   });
 
   it("removes a full match that was previously in the DB", async () => {
-    supabaseMock = makeSupaMock({ staleCount: 1 });
+    supabaseMock = makeSupaMock({
+      staleCount: 1,
+      existingRows: [
+        { id: "db-1", playtomic_id: "match-now-full" },
+        { id: "db-2", playtomic_id: "match-valid" },
+      ],
+    });
     mockFetchBerlinVenues.mockResolvedValue([venue]);
     mockFetchOpenMatches.mockResolvedValue([
-      makePlaytomicMatch("match-now-full", 4, 4), // was valid, now full
+      makePlaytomicMatch("match-now-full", 4, 4),
       makePlaytomicMatch("match-valid", 2, 4),
     ]);
 
@@ -183,13 +222,18 @@ describe("pollAndCleanup", () => {
 
     expect(result.upserted).toBe(1);
     expect(result.stale).toBe(1);
-    expect(supabaseMock.not).toHaveBeenCalledWith(
-      "playtomic_id", "in", expect.not.stringContaining("match-now-full")
-    );
   });
 
   it("deletes stale DB matches not present in fresh Playtomic data", async () => {
-    supabaseMock = makeSupaMock({ expiredCount: 0, staleCount: 3 });
+    supabaseMock = makeSupaMock({
+      staleCount: 3,
+      existingRows: [
+        { id: "db-1", playtomic_id: "match-1" },
+        { id: "db-2", playtomic_id: "stale-a" },
+        { id: "db-3", playtomic_id: "stale-b" },
+        { id: "db-4", playtomic_id: "stale-c" },
+      ],
+    });
     mockFetchBerlinVenues.mockResolvedValue([venue]);
     mockFetchOpenMatches.mockResolvedValue([
       makePlaytomicMatch("match-1", 2, 4),
@@ -199,10 +243,6 @@ describe("pollAndCleanup", () => {
     const result = await pollAndCleanup();
 
     expect(result.stale).toBe(3);
-    // The stale delete must filter by playtomic_id NOT IN the valid set
-    expect(supabaseMock.not).toHaveBeenCalledWith(
-      "playtomic_id", "in", expect.stringContaining("match-1")
-    );
   });
 
   it("skips stale delete when no valid matches were found (avoids wiping DB on total API failure)", async () => {
@@ -214,9 +254,9 @@ describe("pollAndCleanup", () => {
     const { pollAndCleanup } = await import("@/lib/playtomic/pollAndCleanup");
     const result = await pollAndCleanup();
 
-    // .not() should never be called since validPlaytomicIds is empty
-    expect(supabaseMock.not).not.toHaveBeenCalled();
     expect(result.stale).toBe(0);
+    // Only 1 delete call (expired), not 2 (no stale delete when validIds empty)
+    expect(supabaseMock._getDeleteCallCount()).toBe(1);
   });
 
   it("records venue errors but continues processing other venues", async () => {
@@ -243,5 +283,21 @@ describe("pollAndCleanup", () => {
     const result = await pollAndCleanup();
 
     expect(result.expired).toBe(5);
+  });
+
+  it("calls updatePollStatus after a successful poll", async () => {
+    mockFetchBerlinVenues.mockResolvedValue([venue]);
+    mockFetchOpenMatches.mockResolvedValue([
+      makePlaytomicMatch("match-1", 2, 4),
+    ]);
+
+    const { pollAndCleanup } = await import("@/lib/playtomic/pollAndCleanup");
+    await pollAndCleanup();
+
+    expect(mockUpdatePollStatus).toHaveBeenCalledTimes(1);
+    expect(mockUpdatePollStatus).toHaveBeenCalledWith(
+      supabaseMock,
+      expect.objectContaining({ ok: true, upserted: 1 })
+    );
   });
 });

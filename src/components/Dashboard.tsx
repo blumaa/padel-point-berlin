@@ -314,7 +314,7 @@ export default function Dashboard() {
         )}
 
         <div className="klimt-match-wrapper">
-          <MatchList matches={sortedMatches} isLoading={isLoading} />
+          <MatchList key={sortedMatches.map((m) => m.id).join(",")} matches={sortedMatches} isLoading={isLoading} />
         </div>
         <Footer />
       </main>

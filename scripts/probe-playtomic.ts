@@ -23,7 +23,7 @@ function iso14Days() {
 }
 
 async function fetchJSON(url: string, label: string): Promise<unknown> {
-  console.log(`\n→ GET ${url}`);
+  console.log(`\n→ GET [${label}] ${url}`);
   const res = await fetch(url, {
     headers: {
       "User-Agent": "Mozilla/5.0 (compatible; probe-script/1.0)",

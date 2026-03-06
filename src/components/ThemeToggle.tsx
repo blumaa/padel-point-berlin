@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore, useEffect, useState } from "react";
 
 type Theme = "dark" | "light";
 
@@ -18,16 +18,18 @@ function applyTheme(theme: Theme) {
   }
 }
 
+const subscribe = () => () => {};
+function useHydrated() {
+  return useSyncExternalStore(subscribe, () => true, () => false);
+}
+
 export default function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>("dark");
-  const [mounted, setMounted] = useState(false);
+  const [theme, setTheme] = useState<Theme>(getInitialTheme);
+  const mounted = useHydrated();
 
   useEffect(() => {
-    const initial = getInitialTheme();
-    setTheme(initial);
-    applyTheme(initial);
-    setMounted(true);
-  }, []);
+    applyTheme(theme);
+  }, [theme]);
 
   function toggle() {
     const next: Theme = theme === "dark" ? "light" : "dark";

@@ -15,11 +15,6 @@ export default function MatchList({ matches, isLoading }: MatchListProps) {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
-  // Reset to first page whenever the match list changes (filter/sort/date)
-  useEffect(() => {
-    setVisibleCount(PAGE_SIZE);
-  }, [matches]);
-
   // Load more when the sentinel scrolls into view
   useEffect(() => {
     const sentinel = sentinelRef.current;

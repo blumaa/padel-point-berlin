@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState, useEffect } from "react";
+import { memo, useState } from "react";
 
 interface Player {
   name: string;
@@ -74,14 +74,12 @@ interface MatchCardProps {
 }
 
 function MatchCard({ match, isAlt = false }: MatchCardProps) {
-  const [isViewed, setIsViewed] = useState(false);
-
-  useEffect(() => {
+  const [isViewed, setIsViewed] = useState(() => {
     try {
       const ids = JSON.parse(localStorage.getItem("ppb-viewed") ?? "[]") as string[];
-      setIsViewed(ids.includes(match.id));
-    } catch {}
-  }, [match.id]);
+      return ids.includes(match.id);
+    } catch { return false; }
+  });
 
   function markViewed() {
     try {

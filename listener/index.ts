@@ -36,9 +36,11 @@ client.on("message", async (msg) => {
   // e.g. group "Padel Level: 1.5-2.5" belongs to community "Padelhaus Gmbh"
   let communityName: string | null = null;
   try {
-    const meta = (chat as any).groupMetadata;
-    const raw = meta?.parentGroup || meta?.parentGroupId;
-    const parentId = raw?._serialized ?? (typeof raw === "string" ? raw : null);
+    const chatRecord = chat as unknown as Record<string, Record<string, unknown>>;
+    const meta = chatRecord.groupMetadata;
+    const raw = meta?.parentGroup ?? meta?.parentGroupId;
+    const rawRecord = raw as Record<string, string> | string | undefined;
+    const parentId = typeof rawRecord === "object" ? rawRecord?._serialized : (typeof rawRecord === "string" ? rawRecord : null);
     if (parentId) {
       const parentChat = await client.getChatById(parentId);
       communityName = parentChat.name || null;
