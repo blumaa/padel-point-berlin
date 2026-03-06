@@ -12,6 +12,8 @@ import AddMatchModal from "@/components/AddMatchModal";
 import ThemeToggle from "@/components/ThemeToggle";
 import { sortMatches } from "@/lib/sortMatches";
 import { useWeather } from "@/hooks/useWeather";
+import { useHydrated } from "@/hooks/useHydrated";
+import { allDates, loadSelectedDates, persistSelectedDates } from "@/lib/dateSelection";
 
 const TIME_SLOTS = {
   morning:   { start: 6,  end: 11 },
@@ -19,58 +21,62 @@ const TIME_SLOTS = {
   evening:   { start: 17, end: 23 },
 } as const;
 
-function allDates(): string[] {
-  return Array.from({ length: 14 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() + i);
-    return d.toISOString().split("T")[0];
-  });
-}
-
 export default function Dashboard() {
   const dates14 = useMemo(allDates, []);
+  const hydrated = useHydrated();
 
-  // Persist selected dates as day offsets (0–13) so they stay correct across days
-  const [selectedDates, setSelectedDates] = useState<string[]>(() => {
-    try {
-      const stored = localStorage.getItem("ppb-selected-offsets");
-      if (stored) {
-        const offsets = JSON.parse(stored) as number[];
-        const all = allDates();
-        const restored = offsets.map((i) => all[i]).filter(Boolean);
-        if (restored.length > 0) return restored;
-      }
-    } catch {}
-    return allDates();
-  });
+  // All state initializes with SSR-safe defaults, then loads from localStorage after hydration
+  const [selectedDates, _setSelectedDates] = useState<string[]>(allDates);
+  const [filters, _setFilters] = useState<FilterState>(defaultFilters);
+  const [sortField, _setSortField] = useState<"date" | "added">("date");
+  const [sortDir, _setSortDir] = useState<"asc" | "desc">("asc");
+  const [hydrationLoaded, setHydrationLoaded] = useState(false);
 
-  const [filters, setFilters] = useState<FilterState>(() => {
+  if (hydrated && !hydrationLoaded) {
+    setHydrationLoaded(true);
+    _setSelectedDates(loadSelectedDates());
     try {
-      const stored = localStorage.getItem("ppb-filters");
-      if (stored) return { ...defaultFilters, ...JSON.parse(stored) };
+      const storedFilters = localStorage.getItem("ppb-filters");
+      if (storedFilters) _setFilters({ ...defaultFilters, ...JSON.parse(storedFilters) });
+      const storedSort = localStorage.getItem("ppb-sort-field");
+      if (storedSort === "date" || storedSort === "added") _setSortField(storedSort);
+      const storedDir = localStorage.getItem("ppb-sort-dir");
+      if (storedDir === "asc" || storedDir === "desc") _setSortDir(storedDir);
     } catch {}
-    return defaultFilters;
-  });
+  }
+
+  const setSelectedDates = useCallback((dates: string[] | ((prev: string[]) => string[])) => {
+    _setSelectedDates((prev) => {
+      const next = typeof dates === "function" ? dates(prev) : dates;
+      persistSelectedDates(next);
+      return next;
+    });
+  }, []);
+
+  const setFilters = useCallback((value: FilterState | ((prev: FilterState) => FilterState)) => {
+    _setFilters((prev) => {
+      const next = typeof value === "function" ? value(prev) : value;
+      try { localStorage.setItem("ppb-filters", JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }, []);
+
+  const setSortField = useCallback((value: "date" | "added") => {
+    _setSortField(value);
+    try { localStorage.setItem("ppb-sort-field", value); } catch {}
+  }, []);
+
+  const setSortDir = useCallback((value: "asc" | "desc" | ((prev: "asc" | "desc") => "asc" | "desc")) => {
+    _setSortDir((prev) => {
+      const next = typeof value === "function" ? value(prev) : value;
+      try { localStorage.setItem("ppb-sort-dir", next); } catch {}
+      return next;
+    });
+  }, []);
 
   const [availableVenues, setAvailableVenues] = useState<string[]>([]);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
-
-  const [sortField, setSortField] = useState<"date" | "added">(() => {
-    try {
-      const s = localStorage.getItem("ppb-sort-field");
-      if (s === "date" || s === "added") return s;
-    } catch {}
-    return "date";
-  });
-
-  const [sortDir, setSortDir] = useState<"asc" | "desc">(() => {
-    try {
-      const s = localStorage.getItem("ppb-sort-dir");
-      if (s === "asc" || s === "desc") return s;
-    } catch {}
-    return "asc";
-  });
 
   const [logoExpanded, setLogoExpanded] = useState(false);
   const [logoRect, setLogoRect] = useState<DOMRect | null>(null);
@@ -79,27 +85,6 @@ export default function Dashboard() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { weather, isLoading: weatherLoading } = useWeather();
-
-  // Persist state to localStorage
-  useEffect(() => {
-    try {
-      const all = allDates();
-      const offsets = selectedDates.map((d) => all.indexOf(d)).filter((i) => i >= 0);
-      localStorage.setItem("ppb-selected-offsets", JSON.stringify(offsets));
-    } catch {}
-  }, [selectedDates]);
-
-  useEffect(() => {
-    try { localStorage.setItem("ppb-filters", JSON.stringify(filters)); } catch {}
-  }, [filters]);
-
-  useEffect(() => {
-    try { localStorage.setItem("ppb-sort-field", sortField); } catch {}
-  }, [sortField]);
-
-  useEffect(() => {
-    try { localStorage.setItem("ppb-sort-dir", sortDir); } catch {}
-  }, [sortDir]);
 
   useEffect(() => {
     fetch("/api/venues")
@@ -117,13 +102,13 @@ export default function Dashboard() {
         });
       })
       .catch(() => {});
-  }, []);
+  }, [setFilters]);
 
   const toggleDate = useCallback((date: string) => {
     setSelectedDates((prev) =>
       prev.includes(date) ? prev.filter((d) => d !== date) : [...prev, date].sort()
     );
-  }, []);
+  }, [setSelectedDates]);
 
   const activeFilterCount = useMemo(() => {
     return (

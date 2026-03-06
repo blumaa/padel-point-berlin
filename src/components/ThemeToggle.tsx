@@ -1,6 +1,7 @@
 "use client";
 
-import { useSyncExternalStore, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { useHydrated } from "@/hooks/useHydrated";
 
 type Theme = "dark" | "light";
 
@@ -16,11 +17,6 @@ function applyTheme(theme: Theme) {
   } else {
     document.documentElement.classList.remove("light");
   }
-}
-
-const subscribe = () => () => {};
-function useHydrated() {
-  return useSyncExternalStore(subscribe, () => true, () => false);
 }
 
 export default function ThemeToggle() {
