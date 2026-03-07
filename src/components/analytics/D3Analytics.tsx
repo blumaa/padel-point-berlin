@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useCallback } from "react";
-import * as d3 from "d3";
+import { select, type Selection } from "d3-selection";
+import { scaleBand, scaleLinear } from "d3-scale";
+import { max } from "d3-array";
+import { stack, stackOrderNone, stackOffsetNone } from "d3-shape";
+import { axisBottom } from "d3-axis";
+import { easeCubicOut } from "d3-ease";
+import "d3-transition";
 import type { AnalyticsData } from "@/lib/analytics";
 import { useThemeColors, type ThemeColors } from "@/lib/useThemeColors";
 
@@ -28,8 +34,8 @@ function friendlyBucket(key: string): string {
 
 // --- Tooltip helpers ---
 
-function createTooltip(container: HTMLElement): d3.Selection<HTMLDivElement, unknown, null, undefined> {
-  return d3.select(container)
+function createTooltip(container: HTMLElement): Selection<HTMLDivElement, unknown, null, undefined> {
+  return select(container)
     .append("div")
     .style("position", "absolute")
     .style("pointer-events", "none")
@@ -45,7 +51,7 @@ function createTooltip(container: HTMLElement): d3.Selection<HTMLDivElement, unk
 }
 
 function showTooltip(
-  tooltip: d3.Selection<HTMLDivElement, unknown, null, undefined>,
+  tooltip: Selection<HTMLDivElement, unknown, null, undefined>,
   event: MouseEvent | TouchEvent,
   html: string,
 ) {
@@ -56,7 +62,7 @@ function showTooltip(
     .style("position", "fixed");
 }
 
-function hideTooltip(tooltip: d3.Selection<HTMLDivElement, unknown, null, undefined>) {
+function hideTooltip(tooltip: Selection<HTMLDivElement, unknown, null, undefined>) {
   tooltip.style("opacity", "0");
 }
 
@@ -69,10 +75,10 @@ function drawHorizontalBars(
   data: HBarDatum[],
   opts: { color: string; colors: ThemeColors; valueFormat?: (v: number) => string },
 ) {
-  d3.select(container).selectAll("*").remove();
+  select(container).selectAll("*").remove();
   if (data.length === 0) return;
 
-  const wrapper = d3.select(container);
+  const wrapper = select(container);
   wrapper.style("position", "relative");
 
   const margin = { top: 4, right: 40, bottom: 4, left: 90 };
@@ -85,10 +91,10 @@ function drawHorizontalBars(
     .attr("width", width)
     .attr("height", height);
 
-  const maxVal = d3.max(data, d => d.value) || 1;
+  const maxVal = max(data, d => d.value) || 1;
 
-  const x = d3.scaleLinear().domain([0, maxVal]).range([0, width - margin.left - margin.right]);
-  const y = d3.scaleBand()
+  const x = scaleLinear().domain([0, maxVal]).range([0, width - margin.left - margin.right]);
+  const y = scaleBand()
     .domain(data.map(d => d.label))
     .range([margin.top, height - margin.bottom])
     .padding(0.2);
@@ -113,7 +119,7 @@ function drawHorizontalBars(
     .on("mouseout touchend", () => hideTooltip(tooltip))
     .transition()
     .duration(300)
-    .ease(d3.easeCubicOut)
+    .ease(easeCubicOut)
     .attr("width", d => x(d.value));
 
   // Labels on left
@@ -150,10 +156,10 @@ function drawVerticalBars(
   data: VBarDatum[],
   opts: { keys: string[]; colors: string[]; themeColors: ThemeColors; stacked?: boolean },
 ) {
-  d3.select(container).selectAll("*").remove();
+  select(container).selectAll("*").remove();
   if (data.length === 0) return;
 
-  const wrapper = d3.select(container);
+  const wrapper = select(container);
   wrapper.style("position", "relative");
 
   const margin = { top: 10, right: 10, bottom: 30, left: 10 };
@@ -167,7 +173,7 @@ function drawVerticalBars(
   const innerW = width - margin.left - margin.right;
   const innerH = height - margin.top - margin.bottom;
 
-  const x = d3.scaleBand()
+  const x = scaleBand()
     .domain(data.map(d => d.label))
     .range([0, innerW])
     .padding(0.3);
@@ -176,14 +182,14 @@ function drawVerticalBars(
   const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
   if (opts.stacked && opts.keys.length > 1) {
-    const stackGen = d3.stack<VBarDatum>()
+    const stackGen = stack<VBarDatum>()
       .keys(opts.keys)
-      .order(d3.stackOrderNone)
-      .offset(d3.stackOffsetNone);
+      .order(stackOrderNone)
+      .offset(stackOffsetNone);
 
     const series = stackGen(data);
-    const maxVal = d3.max(series, s => d3.max(s, d => d[1])) || 1;
-    const y = d3.scaleLinear().domain([0, maxVal]).range([innerH, 0]);
+    const maxVal = max(series, s => max(s, d => d[1])) || 1;
+    const y = scaleLinear().domain([0, maxVal]).range([innerH, 0]);
 
     g.selectAll("g.series")
       .data(series)
@@ -205,13 +211,13 @@ function drawVerticalBars(
       .on("mouseout touchend", () => hideTooltip(tooltip))
       .transition()
       .duration(300)
-      .ease(d3.easeCubicOut)
+      .ease(easeCubicOut)
       .attr("y", d => y(d[1]))
       .attr("height", d => y(d[0]) - y(d[1]));
   } else {
     const key = opts.keys[0];
-    const maxVal = d3.max(data, d => d[key] as number) || 1;
-    const y = d3.scaleLinear().domain([0, maxVal]).range([innerH, 0]);
+    const maxVal = max(data, d => d[key] as number) || 1;
+    const y = scaleLinear().domain([0, maxVal]).range([innerH, 0]);
 
     g.selectAll("rect")
       .data(data)
@@ -228,7 +234,7 @@ function drawVerticalBars(
       .on("mouseout touchend", () => hideTooltip(tooltip))
       .transition()
       .duration(300)
-      .ease(d3.easeCubicOut)
+      .ease(easeCubicOut)
       .attr("y", d => y(d[key] as number))
       .attr("height", d => innerH - y(d[key] as number));
   }
@@ -236,7 +242,7 @@ function drawVerticalBars(
   // X axis labels
   g.append("g")
     .attr("transform", `translate(0,${innerH})`)
-    .call(d3.axisBottom(x).tickSize(0))
+    .call(axisBottom(x).tickSize(0))
     .call(g => g.select(".domain").remove())
     .selectAll("text")
     .attr("fill", opts.themeColors.textMuted)

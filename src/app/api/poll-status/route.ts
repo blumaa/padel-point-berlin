@@ -7,5 +7,7 @@ export async function GET() {
   if (!status) {
     return NextResponse.json({ last_success_at: null });
   }
-  return NextResponse.json(status);
+  return NextResponse.json(status, {
+    headers: { "Cache-Control": "public, s-maxage=120, stale-while-revalidate=30" },
+  });
 }

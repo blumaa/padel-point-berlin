@@ -2,13 +2,25 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import DayPicker from "@/components/DayPicker";
-import MatchFilters, { defaultFilters, CATEGORIES, type FilterState } from "@/components/MatchFilters";
+import { defaultFilters, CATEGORIES, type FilterState } from "@/components/MatchFilters";
 import type { Match, MatchCategory } from "@/lib/types";
 import MatchList from "@/components/MatchList";
-import { PadelPointBerlin } from "@/components/PadelPointBerlin";
-import LogoOverlay from "@/components/LogoOverlay";
 import Footer from "@/components/Footer";
-import AddMatchModal from "@/components/AddMatchModal";
+import dynamic from "next/dynamic";
+
+const PadelPointBerlin = dynamic(
+  () => import("@/components/PadelPointBerlin").then((m) => ({ default: m.PadelPointBerlin })),
+  { ssr: false }
+);
+const MatchFilters = dynamic(() => import("@/components/MatchFilters"), {
+  ssr: false,
+});
+const LogoOverlay = dynamic(() => import("@/components/LogoOverlay"), {
+  ssr: false,
+});
+const AddMatchModal = dynamic(() => import("@/components/AddMatchModal"), {
+  ssr: false,
+});
 import ThemeToggle from "@/components/ThemeToggle";
 import { sortMatches } from "@/lib/sortMatches";
 import { useWeather } from "@/hooks/useWeather";
@@ -303,7 +315,7 @@ export default function Dashboard() {
         )}
 
         <div className="klimt-match-wrapper">
-          <MatchList key={sortedMatches.map((m) => m.id).join(",")} matches={sortedMatches} isLoading={isLoading} />
+          <MatchList matches={sortedMatches} isLoading={isLoading} />
         </div>
         <Footer />
       </main>
