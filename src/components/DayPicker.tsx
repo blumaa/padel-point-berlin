@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import type { WeatherMap } from "@/hooks/useWeather";
 import WeatherIcon from "@/components/WeatherIcon";
 
@@ -14,7 +15,7 @@ function formatDate(date: Date): string {
   return date.toISOString().split("T")[0];
 }
 
-export default function DayPicker({ selectedDates, onToggle, weather, weatherLoading }: DayPickerProps) {
+export default memo(function DayPicker({ selectedDates, onToggle, weather, weatherLoading }: DayPickerProps) {
   const days = Array.from({ length: 14 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() + i);
@@ -53,4 +54,4 @@ export default function DayPicker({ selectedDates, onToggle, weather, weatherLoa
     </div>
     </div>
   );
-}
+});

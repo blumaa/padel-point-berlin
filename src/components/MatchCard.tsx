@@ -3,6 +3,7 @@
 import { memo, useState, useCallback } from "react";
 import { formatMatchMessage } from "@/lib/formatMatchMessage";
 import type { Match } from "@/lib/types";
+import { useViewedMatches } from "@/hooks/useViewedMatches";
 
 function extractClub(groupName: string | null): string | null {
   if (!groupName) return null;
@@ -62,21 +63,11 @@ function MatchCard({ match, isAlt = false }: MatchCardProps) {
     }).catch(() => {});
   }, [match]);
 
-  const [isViewed, setIsViewed] = useState(() => {
-    try {
-      const ids = JSON.parse(localStorage.getItem("ppb-viewed") ?? "[]") as string[];
-      return ids.includes(match.id);
-    } catch { return false; }
-  });
+  const { isViewed: checkViewed, markViewed: markViewedCtx } = useViewedMatches();
+  const isViewed = checkViewed(match.id);
 
   function markViewed() {
-    try {
-      const ids = JSON.parse(localStorage.getItem("ppb-viewed") ?? "[]") as string[];
-      if (!ids.includes(match.id)) {
-        localStorage.setItem("ppb-viewed", JSON.stringify([...ids, match.id]));
-      }
-      setIsViewed(true);
-    } catch {}
+    markViewedCtx(match.id);
   }
 
   const time = new Date(match.match_time);

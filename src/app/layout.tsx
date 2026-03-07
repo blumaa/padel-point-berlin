@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
-import { cookies } from "next/headers";
 import { Analytics } from "@vercel/analytics/next";
+import { SerwistProvider } from "./serwist-provider";
 import "./globals.css";
 
 const inter = Inter({
@@ -18,6 +18,13 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "PadelPoint",
   },
+  openGraph: {
+    title: "PadelPoint Berlin",
+    description: "Find open padel matches in Berlin",
+    type: "website",
+    locale: "en_DE",
+    siteName: "PadelPoint Berlin",
+  },
 };
 
 export const viewport: Viewport = {
@@ -27,21 +34,25 @@ export const viewport: Viewport = {
   themeColor: "#111118",
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const cookieStore = await cookies();
-  const theme = cookieStore.get("theme")?.value === "light" ? "light" : undefined;
-
   return (
-    <html lang="en" className={theme}>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `try{if(document.cookie.match(/(?:^|;)\\s*theme=light/))document.documentElement.className="light"}catch(e){}` }} />
+        <link rel="dns-prefetch" href="https://zapgtydmlnohikbnkeii.supabase.co" />
+        <link rel="preconnect" href="https://zapgtydmlnohikbnkeii.supabase.co" />
+      </head>
       <body className={inter.variable}>
         <a href="#main-content" className="klimt-skip-link">
           Skip to main content
         </a>
-        {children}
+        <SerwistProvider swUrl="/serwist/sw.js">
+          {children}
+        </SerwistProvider>
         <Analytics />
       </body>
     </html>

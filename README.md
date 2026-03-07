@@ -14,21 +14,21 @@ Both sources upsert by `playtomic_id`, so you never see duplicates. Private (HID
 ## Getting Started
 
 ```bash
-npm install
+bun install
 cp .env.example .env.local   # fill in Supabase credentials
-npm run dev                   # http://localhost:3000
+bun dev                   # http://localhost:3000
 ```
 
 ## Scripts
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Start the dev server |
-| `npm test` | Run all tests (236) |
-| `npm run build` | Production build + type check |
-| `npm run lint` | ESLint |
-| `npm run listener` | Start the WhatsApp listener (needs QR scan on first run) |
-| `npm run replay` | Re-parse all stored WhatsApp messages through the current parser |
+| `bun dev` | Start the dev server |
+| `bun test` | Run all tests (236) |
+| `bun run build` | Production build + type check |
+| `bun run lint` | ESLint |
+| `bun run listener` | Start the WhatsApp listener (needs QR scan on first run) |
+| `bun run replay` | Re-parse all stored WhatsApp messages through the current parser |
 
 ## Project Structure
 
@@ -63,7 +63,7 @@ __tests__/                Jest test suite
 ## Contributing
 
 1. Create a feature branch from `main`
-2. Make sure `npm run lint`, `npm test`, and `npm run build` all pass
+2. Make sure `bun run lint`, `bun test`, and `bun run build` all pass
 3. Open a PR
 
 The parser lives in `src/lib/parser/` and is all pure functions with no I/O - easy to test and extend. If you're adding a new venue, update the alias table in `src/lib/parser/normalizeVenue.ts`.

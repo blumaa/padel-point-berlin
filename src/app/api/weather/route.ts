@@ -60,5 +60,7 @@ export async function GET() {
       weather_code: daily.weather_code,
       daylight_temp,
     },
+  }, {
+    headers: { "Cache-Control": "public, s-maxage=1800, stale-while-revalidate=600" },
   });
 }

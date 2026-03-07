@@ -8,7 +8,9 @@ export async function GET() {
 
     if (error) throw error;
 
-    return NextResponse.json(data.map((r: { venue: string }) => r.venue));
+    return NextResponse.json(data.map((r: { venue: string }) => r.venue), {
+      headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=60" },
+    });
   } catch (error) {
     console.error("Failed to fetch venues:", error);
     return NextResponse.json([], { status: 500 });
