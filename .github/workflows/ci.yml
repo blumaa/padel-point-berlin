@@ -47,3 +47,52 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
       - run: vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN
+
+  version:
+    needs: deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Bump version based on commit message
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          MSG=$(git log -1 --pretty=%s)
+          echo "Commit message: $MSG"
+
+          if echo "$MSG" | grep -qiE '^feat(\(|:|!)'; then
+            BUMP="minor"
+          elif echo "$MSG" | grep -qiE '^(fix|bug)(\(|:|!)'; then
+            BUMP="patch"
+          elif echo "$MSG" | grep -qiE '^(chore|proj|docs|style|refactor|test|ci|build|perf|revert)(\(|:|!)'; then
+            BUMP="patch"
+          else
+            echo "No conventional commit prefix found, skipping version bump"
+            exit 0
+          fi
+
+          echo "Bumping version: $BUMP"
+          NEW_VERSION=$(npm version $BUMP --no-git-tag-version)
+          echo "New version: $NEW_VERSION"
+
+          git add package.json package-lock.json
+          git commit -m "chore: bump version to $NEW_VERSION [skip ci]"
+          git tag "$NEW_VERSION"
+          git push origin main --tags
+      - name: Create GitHub release
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          MSG=$(git log -2 --pretty=%s | tail -1)
+          gh release create "v$NEW_VERSION" --title "v$NEW_VERSION" --notes "$MSG" --latest
