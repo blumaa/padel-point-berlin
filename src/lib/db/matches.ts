@@ -185,12 +185,7 @@ async function replacePlayers(
   if (deleteError) throw deleteError;
 
   if (players.length > 0) {
-    const seen = new Set<number>();
-    const uniquePlayers = players.filter((p) => {
-      if (seen.has(p.slotOrder)) return false;
-      seen.add(p.slotOrder);
-      return true;
-    });
+    const uniquePlayers = deduplicatePlayers(players);
 
     const { error: playersError } = await supabase
       .from("match_players")

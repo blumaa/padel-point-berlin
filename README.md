@@ -1,42 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Padel Point Berlin
+
+A mobile-first dashboard that aggregates open padel matches across Berlin into one place. No more scrolling through WhatsApp groups or checking Playtomic venue by venue.
+
+## How It Works
+
+Two data sources feed into one unified match list:
+
+1. **Playtomic API** - A cron job polls every Berlin venue twice a day, pulling all open matches with real-time player counts, levels, and court info.
+2. **WhatsApp Listener** - A background process watches padel community groups for shared match links. When someone posts a match, it gets parsed and added to the dashboard.
+
+Both sources upsert by `playtomic_id`, so you never see duplicates. Private (HIDDEN) matches only appear if someone explicitly shared them in a WhatsApp group.
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local   # fill in Supabase credentials
+npm run dev                   # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Scripts
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start the dev server |
+| `npm test` | Run all tests (236) |
+| `npm run build` | Production build + type check |
+| `npm run lint` | ESLint |
+| `npm run listener` | Start the WhatsApp listener (needs QR scan on first run) |
+| `npm run replay` | Re-parse all stored WhatsApp messages through the current parser |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Project Structure
 
-## Learn More
+```
+src/
+  app/                    Next.js App Router (pages + API routes)
+  components/             React components (MatchCard, filters, drawer, etc.)
+  lib/
+    db/                   Supabase CRUD (matches, raw messages, poll status)
+    parser/               Pure functions that parse WhatsApp messages
+    playtomic/            Playtomic API client + poll/cleanup logic
+    supabase/             Supabase client factories (browser, SSR, admin)
+    types.ts              Shared TypeScript types
 
-To learn more about Next.js, take a look at the following resources:
+listener/                 WhatsApp listener (separate Node process)
+  index.ts                whatsapp-web.js client setup
+  handler.ts              Message pipeline: store -> parse -> upsert
+  replay.ts               Batch re-process all stored messages
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+supabase/migrations/      SQL migrations (applied via Supabase SQL Editor)
+__tests__/                Jest test suite
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Tech Stack
 
-## Deploy on Vercel
+- **Next.js 15** (App Router, TypeScript, Tailwind CSS)
+- **Supabase** (PostgreSQL + PostgREST)
+- **whatsapp-web.js** (headless Chrome WhatsApp Web client)
+- **Vercel** (hosting + cron)
+- **Jest** (testing)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Contributing
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# padel-point-berlin
+1. Create a feature branch from `main`
+2. Make sure `npm run lint`, `npm test`, and `npm run build` all pass
+3. Open a PR
 
-Things to add:
-
-- share match button
-- analytics dashboard (remove cleanup of matches?)
+The parser lives in `src/lib/parser/` and is all pure functions with no I/O - easy to test and extend. If you're adding a new venue, update the alias table in `src/lib/parser/normalizeVenue.ts`.

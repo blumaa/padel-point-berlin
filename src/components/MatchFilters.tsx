@@ -88,7 +88,10 @@ export default function MatchFilters({
   }, [activePreset]);
 
   // On mount, restore preset filters if one is active
+  const hasRestoredRef = useRef(false);
   useEffect(() => {
+    if (hasRestoredRef.current) return;
+    hasRestoredRef.current = true;
     if (activePreset) {
       const saved = loadPresets()[activePreset];
       if (saved) {
@@ -98,8 +101,7 @@ export default function MatchFilters({
         setActivePreset(null);
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [activePreset, onFilterChange]);
 
   useEffect(() => {
     if (activePreset) {

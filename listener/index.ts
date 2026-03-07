@@ -27,12 +27,11 @@ client.on("ready", () => {
 });
 
 client.on("message_create", async (msg) => {
-  console.log(`[msg] fromMe=${msg.fromMe} body="${msg.body.slice(0, 60)}..."`);
   const chat = await msg.getChat();
 
+  // Process group messages + self-chat (for testing)
   const isSelfChat = msg.fromMe && !chat.isGroup;
   if (!chat.isGroup && !isSelfChat) return;
-  console.log(`[msg] passed filter, isGroup=${chat.isGroup} isSelfChat=${isSelfChat}`);
 
   // Try to get the parent community name (WhatsApp Communities have sub-groups)
   // e.g. group "Padel Level: 1.5-2.5" belongs to community "Padelhaus Gmbh"
