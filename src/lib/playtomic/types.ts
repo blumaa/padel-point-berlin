@@ -31,6 +31,7 @@ export interface PlaytomicMatch {
   teams: PlaytomicTeam[];
   tenant: PlaytomicTenant;
   competition_mode: string | null; // "FRIENDLY" | "COMPETITIVE" | null
+  visibility: string | null; // "VISIBLE" | "HIDDEN" | null
   resource_properties: {
     resource_type: string; // "indoor" | "outdoor"
     resource_size: string;

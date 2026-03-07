@@ -55,9 +55,12 @@ export default function PrivacyPage() {
         <section className="klimt-privacy-section">
           <h2 className="klimt-privacy-heading">4. Data retention</h2>
           <p className="klimt-privacy-text">
-            Match data is automatically deleted as soon as the match time has passed.
+            When a match expires or is no longer available, it is archived rather than deleted.
+            Archived match data is used only for aggregate statistics (e.g. venue popularity, match
+            trends). No personal data is included in analytics — only anonymous counts and averages.
+          </p>
+          <p className="klimt-privacy-text">
             Raw message data used for processing is deleted within 2 days of receipt.
-            No personal data is retained beyond this period.
           </p>
         </section>
 

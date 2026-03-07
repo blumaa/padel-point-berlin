@@ -23,6 +23,7 @@ export interface ParsedMatch {
   players: Player[];
   indoor?: "indoor" | "outdoor" | null;
   competitionMode?: "friendly" | "competitive" | null;
+  visibility?: string | null;
 }
 
 export type MessageFormat = "formatA" | "formatB" | "formatC";
@@ -51,6 +52,7 @@ export interface Match {
   competition_mode: string | null;
   source_group: string | null;
   playtomic_url: string | null;
+  visibility: string | null;
   created_at: string;
   match_players: MatchPlayer[];
 }

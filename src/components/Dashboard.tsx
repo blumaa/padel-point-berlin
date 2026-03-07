@@ -243,6 +243,7 @@ export default function Dashboard() {
               isOpen={isFiltersOpen}
               value={filters}
               availableVenues={availableVenues}
+              matchCount={filteredMatches.length}
               onFilterChange={setFilters}
               onClose={() => setIsFiltersOpen(false)}
             />

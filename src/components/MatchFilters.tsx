@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Drawer from "@/components/Drawer";
+import { loadPresets, savePreset, deletePreset } from "@/lib/filterPresets";
 
 export const TIME_OF_DAY = ["morning", "afternoon", "evening"] as const;
 export type TimeOfDay = typeof TIME_OF_DAY[number];
@@ -44,6 +45,7 @@ interface MatchFiltersProps {
   isOpen: boolean;
   value: FilterState;
   availableVenues: string[];
+  matchCount: number;
   onFilterChange: (filters: FilterState) => void;
   onClose: () => void;
 }
@@ -52,14 +54,131 @@ export default function MatchFilters({
   isOpen,
   value,
   availableVenues,
+  matchCount,
   onFilterChange,
   onClose,
 }: MatchFiltersProps) {
   const [filters, setFilters] = useState<FilterState>(value);
+  const [presets, setPresets] = useState<Record<string, FilterState>>({});
+  const [activePreset, setActivePreset] = useState<string | null>(() => {
+    try { return localStorage.getItem("ppb-active-preset") ?? null; } catch { return null; }
+  });
+  const [isAdding, setIsAdding] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [deleteMode, setDeleteMode] = useState(false);
+  const [presetError, setPresetError] = useState<string | null>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const presetRowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setFilters(value);
   }, [value]);
+
+  useEffect(() => {
+    setPresets(loadPresets());
+  }, []);
+
+  // Persist active preset
+  useEffect(() => {
+    try {
+      if (activePreset) localStorage.setItem("ppb-active-preset", activePreset);
+      else localStorage.removeItem("ppb-active-preset");
+    } catch {}
+  }, [activePreset]);
+
+  // On mount, restore preset filters if one is active
+  useEffect(() => {
+    if (activePreset) {
+      const saved = loadPresets()[activePreset];
+      if (saved) {
+        setFilters(saved);
+        onFilterChange(saved);
+      } else {
+        setActivePreset(null);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (activePreset) {
+      const saved = presets[activePreset];
+      if (saved && JSON.stringify(saved) !== JSON.stringify(filters)) {
+        setActivePreset(null);
+      }
+    }
+  }, [filters, activePreset, presets]);
+
+  useEffect(() => {
+    if (isAdding && nameInputRef.current) {
+      nameInputRef.current.focus();
+    }
+  }, [isAdding]);
+
+  // Exit delete mode on click outside preset row
+  useEffect(() => {
+    if (!deleteMode) return;
+    function handlePointerDown(e: PointerEvent) {
+      if (presetRowRef.current && !presetRowRef.current.contains(e.target as Node)) {
+        setDeleteMode(false);
+      }
+    }
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [deleteMode]);
+
+  function startLongPress() {
+    longPressTimer.current = setTimeout(() => setDeleteMode(true), 500);
+  }
+
+  function cancelLongPress() {
+    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+  }
+
+  function handleLoadPreset(name: string) {
+    if (deleteMode) return;
+    const preset = presets[name];
+    if (!preset) return;
+    setActivePreset(name);
+    setFilters(preset);
+    onFilterChange(preset);
+  }
+
+  function handleSavePreset() {
+    const trimmed = newName.trim();
+    if (!trimmed) return;
+    if (trimmed in presets) {
+      setPresetError("Name already exists");
+      return;
+    }
+    const filtersJson = JSON.stringify(filters);
+    const duplicate = Object.entries(presets).find(([, v]) => JSON.stringify(v) === filtersJson);
+    if (duplicate) {
+      setPresetError(`Same filters as "${duplicate[0]}"`);
+      return;
+    }
+    if (Object.keys(presets).length >= 5) {
+      setPresetError("Max 5 presets. Long-press a preset to delete it.");
+      return;
+    }
+    try {
+      savePreset(trimmed, filters);
+      setPresets(loadPresets());
+      setActivePreset(trimmed);
+      setIsAdding(false);
+      setNewName("");
+      setPresetError(null);
+    } catch {}
+  }
+
+  function handleDeletePreset(name: string) {
+    deletePreset(name);
+    const updated = loadPresets();
+    setPresets(updated);
+    if (activePreset === name) setActivePreset(null);
+    if (Object.keys(updated).length === 0) setDeleteMode(false);
+  }
 
   const isFiltered =
     filters.levelMin !== "" ||
@@ -155,7 +274,9 @@ export default function MatchFilters({
     <Drawer
       isOpen={isOpen}
       onClose={onClose}
-      title="Filters"
+      title={<><span className="klimt-filter-count">{matchCount} matches</span>{!isAdding && (
+        <button type="button" className="klimt-preset-add" onClick={() => setIsAdding(true)}>+ Save preset</button>
+      )}</>}
       actions={
         <>
           <button
@@ -176,8 +297,58 @@ export default function MatchFilters({
         </>
       }
     >
-      {/* Level */}
+      {/* Presets */}
       <div className="klimt-filter-section">
+        {Object.keys(presets).length > 0 && (
+          <div className="klimt-preset-row" ref={presetRowRef}>
+            {Object.keys(presets).map((name) => (
+              <button
+                key={name}
+                type="button"
+                className={`klimt-preset-pill${activePreset === name ? " klimt-preset-pill--active" : ""}${deleteMode ? " klimt-preset-pill--shaking" : ""}`}
+                onClick={() => handleLoadPreset(name)}
+                onPointerDown={startLongPress}
+                onPointerUp={cancelLongPress}
+                onPointerLeave={cancelLongPress}
+              >
+                {name}
+                {deleteMode && (
+                  <span
+                    className="klimt-preset-x-badge"
+                    role="button"
+                    aria-label={`Delete preset ${name}`}
+                    onClick={(e) => { e.stopPropagation(); handleDeletePreset(name); }}
+                  />
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+        {isAdding && (
+          <div className="klimt-preset-add-row">
+            <input
+              ref={nameInputRef}
+              type="text"
+              maxLength={20}
+              value={newName}
+              onChange={(e) => { setNewName(e.target.value); setPresetError(null); }}
+              onKeyDown={(e) => { if (e.key === "Enter") handleSavePreset(); if (e.key === "Escape") { setIsAdding(false); setNewName(""); } }}
+              placeholder="Preset name"
+              className="klimt-input klimt-preset-input"
+            />
+            <button type="button" className="klimt-preset-confirm" onClick={handleSavePreset}>
+              Save
+            </button>
+            <button type="button" className="klimt-preset-cancel" onClick={() => { setIsAdding(false); setNewName(""); setPresetError(null); }}>
+              Cancel
+            </button>
+          </div>
+        )}
+        {presetError && <p className="klimt-preset-error">{presetError}</p>}
+      </div>
+
+      {/* Level */}
+      <div className="klimt-filter-section klimt-filter-section--divided">
         <span className="klimt-filter-label">Level</span>
         <div className="klimt-filter-level-row">
           <div className="klimt-filter-level-field">
@@ -216,74 +387,6 @@ export default function MatchFilters({
         </div>
       </div>
 
-      {/* Time of day */}
-      <div className="klimt-filter-section klimt-filter-section--divided">
-        <span className="klimt-filter-label">Time of Day</span>
-        <div className="klimt-filter-pills">
-          {TIME_OF_DAY.map((slot) => (
-            <button
-              key={slot}
-              type="button"
-              className={`klimt-pill${filters.timeOfDay.includes(slot) ? " klimt-pill--active" : ""}`}
-              onClick={() => toggleTimeOfDay(slot)}
-            >
-              {TIME_LABELS[slot]}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Category */}
-      <div className="klimt-filter-section klimt-filter-section--divided">
-        <span className="klimt-filter-label">Category</span>
-        <div className="klimt-filter-pills">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              type="button"
-              className={`klimt-pill${filters.category.includes(cat) ? " klimt-pill--active" : ""}`}
-              onClick={() => toggleCategory(cat)}
-            >
-              {CATEGORY_LABELS[cat]}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Match type */}
-      <div className="klimt-filter-section klimt-filter-section--divided">
-        <span className="klimt-filter-label">Match Type</span>
-        <div className="klimt-filter-pills">
-          {([null, "friendly", "competitive"] as const).map((opt) => (
-            <button
-              key={String(opt)}
-              type="button"
-              className={`klimt-pill${filters.competitionMode === opt ? " klimt-pill--active" : ""}`}
-              onClick={() => setCompetitionMode(opt)}
-            >
-              {opt === null ? "All" : opt === "friendly" ? "Friendly" : "Competitive"}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Court type */}
-      <div className="klimt-filter-section klimt-filter-section--divided">
-        <span className="klimt-filter-label">Court Type</span>
-        <div className="klimt-filter-pills">
-          {([null, "indoor", "outdoor"] as const).map((opt) => (
-            <button
-              key={String(opt)}
-              type="button"
-              className={`klimt-pill${filters.indoor === opt ? " klimt-pill--active" : ""}`}
-              onClick={() => setIndoor(opt)}
-            >
-              {opt === null ? "All" : opt === "indoor" ? "Indoor" : "Outdoor"}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* Venues */}
       {availableVenues.length > 0 && (
         <div className="klimt-filter-section klimt-filter-section--divided">
@@ -316,6 +419,74 @@ export default function MatchFilters({
           </div>
         </div>
       )}
+
+      {/* Court type */}
+      <div className="klimt-filter-section klimt-filter-section--divided">
+        <span className="klimt-filter-label">Court Type</span>
+        <div className="klimt-filter-pills">
+          {([null, "indoor", "outdoor"] as const).map((opt) => (
+            <button
+              key={String(opt)}
+              type="button"
+              className={`klimt-pill${filters.indoor === opt ? " klimt-pill--active" : ""}`}
+              onClick={() => setIndoor(opt)}
+            >
+              {opt === null ? "All" : opt === "indoor" ? "Indoor" : "Outdoor"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Time of day */}
+      <div className="klimt-filter-section klimt-filter-section--divided">
+        <span className="klimt-filter-label">Time of Day</span>
+        <div className="klimt-filter-pills">
+          {TIME_OF_DAY.map((slot) => (
+            <button
+              key={slot}
+              type="button"
+              className={`klimt-pill${filters.timeOfDay.includes(slot) ? " klimt-pill--active" : ""}`}
+              onClick={() => toggleTimeOfDay(slot)}
+            >
+              {TIME_LABELS[slot]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Match type */}
+      <div className="klimt-filter-section klimt-filter-section--divided">
+        <span className="klimt-filter-label">Match Type</span>
+        <div className="klimt-filter-pills">
+          {([null, "friendly", "competitive"] as const).map((opt) => (
+            <button
+              key={String(opt)}
+              type="button"
+              className={`klimt-pill${filters.competitionMode === opt ? " klimt-pill--active" : ""}`}
+              onClick={() => setCompetitionMode(opt)}
+            >
+              {opt === null ? "All" : opt === "friendly" ? "Friendly" : "Competitive"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Category */}
+      <div className="klimt-filter-section klimt-filter-section--divided">
+        <span className="klimt-filter-label">Category</span>
+        <div className="klimt-filter-pills">
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              className={`klimt-pill${filters.category.includes(cat) ? " klimt-pill--active" : ""}`}
+              onClick={() => toggleCategory(cat)}
+            >
+              {CATEGORY_LABELS[cat]}
+            </button>
+          ))}
+        </div>
+      </div>
     </Drawer>
   );
 }
