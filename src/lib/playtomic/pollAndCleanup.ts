@@ -10,10 +10,11 @@ export async function pollAndCleanup() {
   const now = new Date();
   const fromDate = now.toISOString().split("T")[0];
 
-  // 1. Delete matches that have already happened
+  // 1. Soft-delete matches that have already happened
   const { count: expired } = await supabase
     .from("matches")
-    .delete({ count: "exact" })
+    .update({ archived_at: now.toISOString() })
+    .is("archived_at", null)
     .lt("match_time", now.toISOString());
 
   // 2. Fetch all Berlin venues
@@ -70,6 +71,7 @@ export async function pollAndCleanup() {
     .from("matches")
     .select("id, playtomic_id")
     .eq("source_group", "playtomic_api")
+    .is("archived_at", null)
     .gt("match_time", now.toISOString());
 
   const staleIds = (existingRows ?? [])
@@ -77,11 +79,11 @@ export async function pollAndCleanup() {
     .map((r) => r.id as string);
 
   if (staleIds.length > 0) {
-    const { count: deleted } = await supabase
+    const { count: archived } = await supabase
       .from("matches")
-      .delete({ count: "exact" })
+      .update({ archived_at: now.toISOString() })
       .in("id", staleIds);
-    stale = deleted ?? 0;
+    stale = archived ?? 0;
   }
 
   const result = {

@@ -33,6 +33,7 @@ function makeMatch(overrides: Partial<PlaytomicMatch> = {}): PlaytomicMatch {
       },
     },
     competition_mode: "FRIENDLY",
+    visibility: "VISIBLE",
     resource_properties: {
       resource_type: "indoor",
       resource_size: "P4",

@@ -27,6 +27,7 @@ export async function upsertMatch(
         playtomic_url: match.playtomicUrl,
         indoor: match.indoor ?? null,
         competition_mode: match.competitionMode ?? null,
+        visibility: match.visibility ?? "VISIBLE",
       },
       { onConflict: "playtomic_id" }
     )
@@ -94,6 +95,8 @@ export async function getUpcomingMatches(
   let q = supabase
     .from("matches")
     .select("*, match_players(*)")
+    .is("archived_at", null)
+    .or("visibility.is.null,visibility.neq.HIDDEN")
     .gte("match_time", new Date().toISOString())
     .order("match_time", { ascending: true })
     .limit(5000);

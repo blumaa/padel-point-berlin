@@ -1,6 +1,7 @@
 "use client";
 
-import { memo, useState } from "react";
+import { memo, useState, useCallback } from "react";
+import { formatMatchMessage } from "@/lib/formatMatchMessage";
 
 interface Player {
   name: string;
@@ -74,6 +75,16 @@ interface MatchCardProps {
 }
 
 function MatchCard({ match, isAlt = false }: MatchCardProps) {
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = useCallback(() => {
+    const msg = formatMatchMessage(match);
+    navigator.clipboard.writeText(msg).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    }).catch(() => {});
+  }, [match]);
+
   const [isViewed, setIsViewed] = useState(() => {
     try {
       const ids = JSON.parse(localStorage.getItem("ppb-viewed") ?? "[]") as string[];
@@ -256,17 +267,40 @@ function MatchCard({ match, isAlt = false }: MatchCardProps) {
         </div>
       </div>
 
-      {match.playtomic_url && (
-        <a
-          href={match.playtomic_url}
-          onClick={markViewed}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="klimt-cta"
+      <div className="klimt-card-actions">
+        {match.playtomic_url && (
+          <a
+            href={match.playtomic_url}
+            onClick={markViewed}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="klimt-cta"
+          >
+            Open in Playtomic
+          </a>
+        )}
+        <button
+          type="button"
+          className="klimt-share-btn"
+          onClick={handleShare}
+          aria-label="Copy match to clipboard"
+          title="Copy match to clipboard"
         >
-          Open in Playtomic
-        </a>
-      )}
+          {copied ? (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          ) : (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+              <polyline points="16 6 12 2 8 6" />
+              <line x1="12" y1="2" x2="12" y2="15" />
+            </svg>
+          )}
+        </button>
+      </div>
     </div>
   );
 }

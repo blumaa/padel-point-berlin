@@ -36,20 +36,21 @@ function makeSupaMock({
   staleCount?: number;
   existingRows?: { id: string; playtomic_id: string }[];
 } = {}) {
-  let deleteCallCount = 0;
+  let updateCallCount = 0;
 
   function makeChain() {
     let isSelect = false;
-    let isDelete = false;
-    let currentDeleteNum = 0;
+    let isUpdate = false;
+    let currentUpdateNum = 0;
 
     const chain: Record<string, jest.Mock> & { then: jest.Mock } = {
-      delete: jest.fn().mockImplementation(() => {
-        isDelete = true;
-        deleteCallCount++;
-        currentDeleteNum = deleteCallCount;
+      update: jest.fn().mockImplementation(() => {
+        isUpdate = true;
+        updateCallCount++;
+        currentUpdateNum = updateCallCount;
         return chain;
       }),
+      delete: jest.fn().mockReturnThis(),
       select: jest.fn().mockImplementation(() => {
         isSelect = true;
         return chain;
@@ -57,6 +58,7 @@ function makeSupaMock({
       eq: jest.fn().mockReturnThis(),
       gt: jest.fn().mockReturnThis(),
       lt: jest.fn().mockReturnThis(),
+      is: jest.fn().mockReturnThis(),
       in: jest.fn().mockReturnThis(),
       insert: jest.fn().mockReturnThis(),
       upsert: jest.fn().mockReturnThis(),
@@ -64,8 +66,8 @@ function makeSupaMock({
       then: jest.fn().mockImplementation((resolve: (v: unknown) => void) => {
         if (isSelect) {
           resolve({ data: existingRows, error: null });
-        } else if (isDelete) {
-          const count = currentDeleteNum === 1 ? expiredCount : staleCount;
+        } else if (isUpdate) {
+          const count = currentUpdateNum === 1 ? expiredCount : staleCount;
           resolve({ count, error: null });
         } else {
           resolve({ error: null });
@@ -78,7 +80,7 @@ function makeSupaMock({
 
   const mock = {
     from: jest.fn().mockImplementation(() => makeChain()),
-    _getDeleteCallCount: () => deleteCallCount,
+    _getUpdateCallCount: () => updateCallCount,
   };
 
   return mock;
@@ -114,6 +116,7 @@ function makePlaytomicMatch(id: string, confirmedPlayers: number, maxPlayers: nu
     ],
     tenant: venue,
     competition_mode: "FRIENDLY",
+    visibility: "VISIBLE",
     resource_properties: { resource_type: "outdoor", resource_size: "P4", resource_feature: "GLASS" },
   };
 }
@@ -255,8 +258,8 @@ describe("pollAndCleanup", () => {
     const result = await pollAndCleanup();
 
     expect(result.stale).toBe(0);
-    // Only 1 delete call (expired), not 2 (no stale delete when validIds empty)
-    expect(supabaseMock._getDeleteCallCount()).toBe(1);
+    // Only 1 update call (expired), not 2 (no stale archive when validIds empty)
+    expect(supabaseMock._getUpdateCallCount()).toBe(1);
   });
 
   it("records venue errors but continues processing other venues", async () => {

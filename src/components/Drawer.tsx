@@ -8,7 +8,7 @@ import { shouldDismiss } from "@/lib/drawerLogic";
 interface DrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  title: string;
+  title: React.ReactNode;
   actions?: React.ReactNode;
   children: React.ReactNode;
 }

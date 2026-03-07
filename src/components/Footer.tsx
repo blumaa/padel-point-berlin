@@ -30,7 +30,7 @@ export default function Footer() {
     <footer className="klimt-footer">
       <div className="klimt-footer-row">
         <span>&copy; {new Date().getFullYear()} PadelPoint Berlin</span>
-        <Link href="/privacy" className="klimt-footer-link">
+<Link href="/privacy" className="klimt-footer-link">
           Privacy Policy
         </Link>
       </div>
