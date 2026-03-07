@@ -8,7 +8,7 @@ export interface AnalyticsFilterState {
 }
 
 export const DEFAULT_ANALYTICS_FILTERS: AnalyticsFilterState = {
-  period: "90d",
+  period: "30d",
   venues: [],
 };
 

@@ -17,6 +17,7 @@ function makeMatch(overrides: Partial<Match> = {}): Match {
     source_group: "playtomic_api",
     playtomic_url: "https://app.playtomic.io/match/abc",
     visibility: "VISIBLE",
+    archive_reason: null,
     created_at: "2026-02-07T10:00:00Z",
     match_players: [
       { id: "p1", match_id: "m1", name: "Alice", level: 3, status: "confirmed", slot_order: 1 },
@@ -43,6 +44,8 @@ describe("aggregateAnalytics", () => {
     expect(result).toHaveProperty("indoorOutdoorByMonth");
     expect(result).toHaveProperty("averageLeadTime");
     expect(result).toHaveProperty("friendlyVsCompetitive");
+    expect(result).toHaveProperty("outcomeByMonth");
+    expect(result).toHaveProperty("outcomeSummary");
   });
 
   it("returns metadata", () => {
@@ -126,7 +129,7 @@ describe("aggregateAnalytics", () => {
     const result = aggregateAnalytics(matches);
     const venue = result.fillRate.find((v: { venue: string }) => v.venue === "Full Club");
     expect(venue).toBeDefined();
-    expect(venue!.percentage).toBe(50); // 1 of 2 fully filled
+    expect(venue!.percentage).toBe(63); // 5 confirmed slots / 8 total slots
   });
 
   // Matches Per Week
@@ -241,5 +244,45 @@ describe("aggregateAnalytics", () => {
     const result = aggregateAnalytics(matches);
     expect(result.venuePopularity).toContainEqual({ venue: "Club A", count: 1 });
     expect(result.venuePopularity).toContainEqual({ venue: "Unknown", count: 1 });
+  });
+
+  // Outcome by Month
+  it("counts outcomes by month", () => {
+    const matches = [
+      makeMatch({ id: "m1", archive_reason: "filled", match_time: "2026-01-15T10:00:00Z" }),
+      makeMatch({ id: "m2", archive_reason: "canceled", match_time: "2026-01-20T10:00:00Z" }),
+      makeMatch({ id: "m3", archive_reason: "filled", match_time: "2026-02-15T10:00:00Z" }),
+      makeMatch({ id: "m4", archive_reason: null, match_time: "2026-02-20T10:00:00Z" }),
+    ];
+    const result = aggregateAnalytics(matches);
+    expect(result.outcomeByMonth.length).toBe(2);
+    const jan = result.outcomeByMonth.find((m) => m.month === "2026-01");
+    expect(jan).toBeDefined();
+    expect(jan!.filled).toBe(1);
+    expect(jan!.canceled).toBe(1);
+    const feb = result.outcomeByMonth.find((m) => m.month === "2026-02");
+    expect(feb).toBeDefined();
+    expect(feb!.filled).toBe(1);
+    expect(feb!.pending).toBe(1);
+  });
+
+  // Outcome Summary
+  it("aggregates outcome summary totals", () => {
+    const matches = [
+      makeMatch({ id: "m1", archive_reason: "filled" }),
+      makeMatch({ id: "m2", archive_reason: "filled" }),
+      makeMatch({ id: "m3", archive_reason: "expired" }),
+      makeMatch({ id: "m4", archive_reason: null }),
+    ];
+    const result = aggregateAnalytics(matches);
+    expect(result.outcomeSummary).toContainEqual({ reason: "filled", count: 2 });
+    expect(result.outcomeSummary).toContainEqual({ reason: "expired", count: 1 });
+    expect(result.outcomeSummary).toContainEqual({ reason: "pending", count: 1 });
+  });
+
+  it("returns empty outcome arrays for empty input", () => {
+    const result = aggregateAnalytics([]);
+    expect(result.outcomeByMonth).toEqual([]);
+    expect(result.outcomeSummary).toEqual([]);
   });
 });

@@ -53,6 +53,7 @@ export interface Match {
   source_group: string | null;
   playtomic_url: string | null;
   visibility: string | null;
+  archive_reason: string | null;
   created_at: string;
   match_players: MatchPlayer[];
 }

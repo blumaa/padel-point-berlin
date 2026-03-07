@@ -198,6 +198,57 @@ export default function CSSAnalytics({ data }: Props) {
         </div>
       </section>
 
+      {/* Match Outcomes by Month */}
+      {data.outcomeByMonth.length > 0 && (
+        <section className="klimt-stat-card">
+          <h2 className="klimt-stat-heading">Match Outcomes by Month</h2>
+          {data.outcomeByMonth.map((m) => {
+            const total = m.filled + m.canceled + m.empty + m.expired + m.stale + m.pending;
+            const maxOutcome = Math.max(...data.outcomeByMonth.map((o) => o.filled + o.canceled + o.empty + o.expired + o.stale + o.pending), 1);
+            return (
+              <div key={m.month} className="klimt-bar-row">
+                <span className="klimt-bar-label">{friendlyMonth(m.month)}</span>
+                <div className="klimt-bar-track klimt-bar-track--stacked">
+                  <div className="klimt-bar-fill klimt-bar-fill--filled" style={{ width: `${(m.filled / maxOutcome) * 100}%` }} title={`Filled: ${m.filled}`} />
+                  <div className="klimt-bar-fill klimt-bar-fill--canceled" style={{ width: `${(m.canceled / maxOutcome) * 100}%` }} title={`Canceled: ${m.canceled}`} />
+                  <div className="klimt-bar-fill klimt-bar-fill--empty" style={{ width: `${(m.empty / maxOutcome) * 100}%` }} title={`Empty: ${m.empty}`} />
+                  <div className="klimt-bar-fill klimt-bar-fill--expired" style={{ width: `${(m.expired / maxOutcome) * 100}%` }} title={`Expired: ${m.expired}`} />
+                  {m.stale > 0 && <div className="klimt-bar-fill klimt-bar-fill--stale" style={{ width: `${(m.stale / maxOutcome) * 100}%` }} title={`Stale: ${m.stale}`} />}
+                  {m.pending > 0 && <div className="klimt-bar-fill klimt-bar-fill--pending" style={{ width: `${(m.pending / maxOutcome) * 100}%` }} title={`Pending: ${m.pending}`} />}
+                </div>
+                <span className="klimt-bar-value">{total}</span>
+              </div>
+            );
+          })}
+          <div className="klimt-legend">
+            <span className="klimt-legend-item"><span className="klimt-legend-swatch klimt-legend-swatch--filled" /> Filled</span>
+            <span className="klimt-legend-item"><span className="klimt-legend-swatch klimt-legend-swatch--canceled" /> Canceled</span>
+            <span className="klimt-legend-item"><span className="klimt-legend-swatch klimt-legend-swatch--empty" /> Empty</span>
+            <span className="klimt-legend-item"><span className="klimt-legend-swatch klimt-legend-swatch--expired" /> Expired</span>
+          </div>
+        </section>
+      )}
+
+      {/* Outcome Summary */}
+      {data.outcomeSummary.length > 0 && (
+        <section className="klimt-stat-card">
+          <h2 className="klimt-stat-heading">Outcome Summary</h2>
+          {(() => {
+            const maxSummary = Math.max(...data.outcomeSummary.map((s) => s.count), 1);
+            const reasonClass: Record<string, string> = { filled: "filled", canceled: "canceled", empty: "empty", expired: "expired", stale: "stale", pending: "pending" };
+            return data.outcomeSummary.map((s) => (
+              <div key={s.reason} className="klimt-bar-row">
+                <span className="klimt-bar-label" style={{ textTransform: "capitalize" }}>{s.reason}</span>
+                <div className="klimt-bar-track">
+                  <div className={`klimt-bar-fill klimt-bar-fill--${reasonClass[s.reason] ?? "accent"}`} style={{ width: `${(s.count / maxSummary) * 100}%` }} />
+                </div>
+                <span className="klimt-bar-value">{s.count}</span>
+              </div>
+            ));
+          })()}
+        </section>
+      )}
+
       {/* Average Lead Time */}
       <section className="klimt-stat-card">
         <h2 className="klimt-stat-heading">Avg. Lead Time (days before match)</h2>

@@ -9,6 +9,8 @@ export interface CategoryCount { category: string; count: number }
 export interface IndoorOutdoorMonth { month: string; indoor: number; outdoor: number }
 export interface LeadTimeRow { venue: string; avgDays: number }
 export interface CompetitiveMonth { month: string; friendly: number; competitive: number }
+export interface OutcomeMonth { month: string; filled: number; canceled: number; empty: number; expired: number; stale: number; pending: number }
+export interface OutcomeSummary { reason: string; count: number }
 
 export interface AnalyticsData {
   totalMatches: number;
@@ -23,6 +25,8 @@ export interface AnalyticsData {
   indoorOutdoorByMonth: IndoorOutdoorMonth[];
   averageLeadTime: LeadTimeRow[];
   friendlyVsCompetitive: CompetitiveMonth[];
+  outcomeByMonth: OutcomeMonth[];
+  outcomeSummary: OutcomeSummary[];
 }
 
 // Monday-first for Berlin audience
@@ -64,6 +68,8 @@ export function aggregateAnalytics(matches: Match[]): AnalyticsData {
       indoorOutdoorByMonth: [],
       averageLeadTime: [],
       friendlyVsCompetitive: [],
+      outcomeByMonth: [],
+      outcomeSummary: [],
     };
   }
 
@@ -103,23 +109,22 @@ export function aggregateAnalytics(matches: Match[]): AnalyticsData {
     .map(([label, count]) => ({ label, count }))
     .sort((a, b) => a.label.localeCompare(b.label));
 
-  // Fill Rate by Venue
-  const venueFill = new Map<string, { filled: number; total: number }>();
+  // Fill Rate by Venue — average confirmed-player ratio per match (4 slots max)
+  const venueFill = new Map<string, { confirmedSlots: number; totalMatches: number }>();
   for (const m of matches) {
     const v = m.venue ?? "Unknown";
-    if (!venueFill.has(v)) venueFill.set(v, { filled: 0, total: 0 });
+    if (!venueFill.has(v)) venueFill.set(v, { confirmedSlots: 0, totalMatches: 0 });
     const entry = venueFill.get(v)!;
-    entry.total++;
-    const allConfirmed = m.match_players.length >= 4 &&
-      m.match_players.every(p => p.status === "confirmed");
-    if (allConfirmed) entry.filled++;
+    entry.totalMatches++;
+    const confirmed = m.match_players.filter(p => p.status === "confirmed").length;
+    entry.confirmedSlots += confirmed;
   }
   const fillRate = [...venueFill.entries()]
-    .map(([venue, { filled, total }]) => ({
+    .map(([venue, { confirmedSlots, totalMatches }]) => ({
       venue,
-      percentage: Math.round((filled / total) * 100),
-      filled,
-      total,
+      percentage: Math.round((confirmedSlots / (totalMatches * 4)) * 100),
+      filled: confirmedSlots,
+      total: totalMatches * 4,
     }))
     .sort((a, b) => b.percentage - a.percentage);
 
@@ -203,6 +208,32 @@ export function aggregateAnalytics(matches: Match[]): AnalyticsData {
     .map(([month, data]) => ({ month, ...data }))
     .sort((a, b) => a.month.localeCompare(b.month));
 
+  // Outcome by Month
+  const outcomeMonths = new Map<string, Record<string, number>>();
+  for (const m of matches) {
+    const month = getMonthKey(new Date(m.match_time));
+    if (!outcomeMonths.has(month)) {
+      outcomeMonths.set(month, { filled: 0, canceled: 0, empty: 0, expired: 0, stale: 0, pending: 0 });
+    }
+    const reason = m.archive_reason ?? "pending";
+    const bucket = outcomeMonths.get(month)!;
+    if (reason in bucket) bucket[reason]++;
+    else bucket.pending++;
+  }
+  const outcomeByMonth = [...outcomeMonths.entries()]
+    .map(([month, counts]) => ({ month, ...counts } as OutcomeMonth))
+    .sort((a, b) => a.month.localeCompare(b.month));
+
+  // Outcome Summary
+  const outcomeTotals = new Map<string, number>();
+  for (const m of matches) {
+    const reason = m.archive_reason ?? "pending";
+    outcomeTotals.set(reason, (outcomeTotals.get(reason) ?? 0) + 1);
+  }
+  const outcomeSummary = [...outcomeTotals.entries()]
+    .map(([reason, count]) => ({ reason, count }))
+    .sort((a, b) => b.count - a.count);
+
   return {
     totalMatches: matches.length,
     earliestDate,
@@ -216,5 +247,7 @@ export function aggregateAnalytics(matches: Match[]): AnalyticsData {
     indoorOutdoorByMonth,
     averageLeadTime,
     friendlyVsCompetitive,
+    outcomeByMonth,
+    outcomeSummary,
   };
 }

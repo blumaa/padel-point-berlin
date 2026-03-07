@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, Cell,
   ResponsiveContainer,
 } from "recharts";
 import type { AnalyticsData } from "@/lib/analytics";
+import { useThemeColors } from "@/lib/useThemeColors";
 
 function friendlyMonth(iso: string): string {
   const [y, m] = iso.split("-");
@@ -28,48 +28,6 @@ interface Props {
   data: AnalyticsData;
 }
 
-interface ThemeColors {
-  accent: string;
-  match: string;
-  confirmed: string;
-  open: string;
-  class: string;
-  textMuted: string;
-  text: string;
-  surface2: string;
-}
-
-function useThemeColors(): ThemeColors {
-  const [colors, setColors] = useState<ThemeColors>({
-    accent: "#06b6d4",
-    match: "#818cf8",
-    confirmed: "#22c55e",
-    open: "#f59e0b",
-    class: "#f472b6",
-    textMuted: "#a1a1aa",
-    text: "#fafafa",
-    surface2: "#27272a",
-  });
-
-  useEffect(() => {
-    const style = getComputedStyle(document.documentElement);
-    const get = (v: string) => style.getPropertyValue(v).trim() || colors[v.replace("--", "") as keyof ThemeColors];
-    setColors({
-      accent: get("--accent"),
-      match: get("--match"),
-      confirmed: get("--confirmed"),
-      open: get("--open"),
-      class: get("--class"),
-      textMuted: get("--text-muted"),
-      text: get("--text"),
-      surface2: get("--surface2"),
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  return colors;
-}
-
 const tooltipStyle = {
   backgroundColor: "var(--surface)",
   border: "1px solid var(--border)",
@@ -89,6 +47,8 @@ export default function RechartsAnalytics({ data }: Props) {
   const ioData = data.indoorOutdoorByMonth.map((m) => ({ name: friendlyMonth(m.month), indoor: m.indoor, outdoor: m.outdoor }));
   const leadData = data.averageLeadTime.map((v) => ({ name: v.venue, days: v.avgDays }));
   const compData = data.friendlyVsCompetitive.map((m) => ({ name: friendlyMonth(m.month), friendly: m.friendly, competitive: m.competitive }));
+  const outcomeData = data.outcomeByMonth.map((m) => ({ name: friendlyMonth(m.month), filled: m.filled, canceled: m.canceled, empty: m.empty, expired: m.expired, stale: m.stale, pending: m.pending }));
+  const summaryData = data.outcomeSummary.map((s) => ({ name: s.reason.charAt(0).toUpperCase() + s.reason.slice(1), count: s.count }));
 
   // Heatmap stays as CSS/HTML
   const peakMax = Math.max(
@@ -231,6 +191,49 @@ export default function RechartsAnalytics({ data }: Props) {
           <span className="klimt-legend-item"><span className="klimt-legend-swatch klimt-legend-swatch--outdoor" /> Outdoor</span>
         </div>
       </section>
+
+      {/* Match Outcomes by Month */}
+      {outcomeData.length > 0 && (
+        <section className="klimt-stat-card">
+          <h2 className="klimt-stat-heading">Match Outcomes by Month</h2>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={outcomeData} margin={{ left: 0, right: 10, top: 5, bottom: 5 }}>
+              <XAxis dataKey="name" tick={{ fill: c.textMuted, fontSize: 10 }} axisLine={false} tickLine={false} />
+              <YAxis hide />
+              <Tooltip contentStyle={tooltipStyle} cursor={{ fill: c.surface2 }} />
+              <Bar dataKey="filled" stackId="outcome" fill={c.confirmed} barSize={20} />
+              <Bar dataKey="canceled" stackId="outcome" fill={c.class} barSize={20} />
+              <Bar dataKey="empty" stackId="outcome" fill={c.textMuted} barSize={20} />
+              <Bar dataKey="expired" stackId="outcome" fill={c.open} barSize={20} />
+              <Bar dataKey="stale" stackId="outcome" fill={c.match} barSize={20} />
+              <Bar dataKey="pending" stackId="outcome" fill={c.accent} barSize={20} radius={[3, 3, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+          <div className="klimt-legend">
+            <span className="klimt-legend-item"><span className="klimt-legend-swatch klimt-legend-swatch--filled" /> Filled</span>
+            <span className="klimt-legend-item"><span className="klimt-legend-swatch klimt-legend-swatch--canceled" /> Canceled</span>
+            <span className="klimt-legend-item"><span className="klimt-legend-swatch klimt-legend-swatch--empty" /> Empty</span>
+            <span className="klimt-legend-item"><span className="klimt-legend-swatch klimt-legend-swatch--expired" /> Expired</span>
+          </div>
+        </section>
+      )}
+
+      {/* Outcome Summary */}
+      {summaryData.length > 0 && (
+        <section className="klimt-stat-card">
+          <h2 className="klimt-stat-heading">Outcome Summary</h2>
+          <ResponsiveContainer width="100%" height={summaryData.length * barHeight + 20}>
+            <BarChart data={summaryData} layout="vertical" margin={{ left: 0, right: 30, top: 0, bottom: 0 }}>
+              <XAxis type="number" hide />
+              <YAxis type="category" dataKey="name" width={80} tick={{ fill: c.textMuted, fontSize: 12 }} axisLine={false} tickLine={false} />
+              <Tooltip contentStyle={tooltipStyle} cursor={{ fill: c.surface2 }} />
+              <Bar dataKey="count" radius={[0, 3, 3, 0]} barSize={14}>
+                {summaryData.map((_, i) => <Cell key={i} fill={c.accent} />)}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </section>
+      )}
 
       {/* Average Lead Time */}
       <section className="klimt-stat-card">

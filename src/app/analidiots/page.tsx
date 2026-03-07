@@ -13,6 +13,11 @@ const RechartsAnalytics = dynamic(
   { ssr: false, loading: () => <p className="klimt-privacy-text">Loading charts...</p> },
 );
 
+const D3Analytics = dynamic(
+  () => import("@/components/analytics/D3Analytics"),
+  { ssr: false, loading: () => <p className="klimt-privacy-text">Loading charts...</p> },
+);
+
 const TIME_PERIODS: { value: TimePeriod; label: string }[] = [
   { value: "30d", label: "30d" },
   { value: "90d", label: "90d" },
@@ -21,7 +26,7 @@ const TIME_PERIODS: { value: TimePeriod; label: string }[] = [
   { value: "all", label: "All" },
 ];
 
-type ChartRenderer = "css" | "recharts";
+type ChartRenderer = "css" | "recharts" | "d3";
 
 function dateRange(earliest: string | null, latest: string | null): string {
   if (!earliest || !latest) return "";
@@ -196,14 +201,22 @@ export default function AnalyticsPage() {
             >
               Charts
             </button>
+            <button
+              className={`klimt-sort-pill-btn ${chartRenderer === "d3" ? "klimt-sort-pill-btn--active" : ""}`}
+              onClick={() => toggleRenderer("d3")}
+            >
+              D3
+            </button>
           </div>
         </div>
 
         {/* Charts */}
         {chartRenderer === "css" ? (
           <CSSAnalytics data={analyticsData} />
-        ) : (
+        ) : chartRenderer === "recharts" ? (
           <RechartsAnalytics data={analyticsData} />
+        ) : (
+          <D3Analytics data={analyticsData} />
         )}
       </div>
     </div>

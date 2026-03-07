@@ -1676,6 +1676,17 @@ body {
 .klimt-bar-fill--outdoor { background: var(--open); }
 .klimt-bar-fill--friendly { background: var(--confirmed); }
 .klimt-bar-fill--competitive { background: var(--class); }
+.klimt-bar-fill--filled { background: var(--confirmed); }
+.klimt-bar-fill--canceled { background: var(--class); }
+.klimt-bar-fill--empty { background: var(--text-muted); }
+.klimt-bar-fill--expired { background: var(--open); }
+.klimt-bar-fill--stale { background: var(--match); }  /* purple — visible on both themes */
+.klimt-bar-fill--pending { background: var(--accent); }
+
+.klimt-legend-swatch--filled { background: var(--confirmed); }
+.klimt-legend-swatch--canceled { background: var(--class); }
+.klimt-legend-swatch--empty { background: var(--text-muted); }
+.klimt-legend-swatch--expired { background: var(--open); }
 
 .klimt-legend {
   display: flex;

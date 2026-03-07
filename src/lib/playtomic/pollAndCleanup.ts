@@ -12,7 +12,7 @@ export async function pollAndCleanup() {
   // 1. Soft-delete matches that have already happened
   const { count: expired } = await supabase
     .from("matches")
-    .update({ archived_at: now.toISOString() })
+    .update({ archived_at: now.toISOString(), archive_reason: "expired" })
     .is("archived_at", null)
     .lt("match_time", now.toISOString());
 
@@ -23,14 +23,15 @@ export async function pollAndCleanup() {
   const validPlaytomicIds = new Set<string>();
   const errors: string[] = [];
 
+  type ArchiveEntry = { parsed: ReturnType<typeof mapToMatch>; reason: string };
   const openParsed: ReturnType<typeof mapToMatch>[] = [];
-  const archiveParsed: ReturnType<typeof mapToMatch>[] = [];
+  const archiveEntries: ArchiveEntry[] = [];
 
   const fetchResults = await Promise.allSettled(
     venues.map(async (venue) => {
       const matches = await fetchOpenMatches(venue.tenant_id, fromDate);
       const open: ReturnType<typeof mapToMatch>[] = [];
-      const archive: ReturnType<typeof mapToMatch>[] = [];
+      const archive: ArchiveEntry[] = [];
       for (const m of matches) {
         const confirmedPlayers = m.teams.reduce((sum: number, t) => sum + t.players.length, 0);
         const maxPlayers = m.teams.reduce((sum: number, t) => sum + t.max_players, 0);
@@ -38,9 +39,12 @@ export async function pollAndCleanup() {
         const isFull = confirmedPlayers >= maxPlayers;
         const isEmpty = confirmedPlayers === 0;
         const parsed = mapToMatch(m);
-        if (isCanceled || isFull || isEmpty) {
-          // Still upsert for analytics, but will be archived immediately
-          archive.push(parsed);
+        if (isFull) {
+          archive.push({ parsed, reason: "filled" });
+        } else if (isCanceled) {
+          archive.push({ parsed, reason: "canceled" });
+        } else if (isEmpty) {
+          archive.push({ parsed, reason: "empty" });
         } else {
           validPlaytomicIds.add(m.match_id);
           open.push(parsed);
@@ -53,29 +57,39 @@ export async function pollAndCleanup() {
   for (const r of fetchResults) {
     if (r.status === "fulfilled") {
       openParsed.push(...r.value.open);
-      archiveParsed.push(...r.value.archive);
+      archiveEntries.push(...r.value.archive);
     } else {
       errors.push(String(r.reason));
     }
   }
 
   // 4. Bulk upsert all matches (open + archived for analytics)
-  const allParsed = [...openParsed, ...archiveParsed];
+  const allParsed = [...openParsed, ...archiveEntries.map((e) => e.parsed)];
   const bulkResult = await bulkUpsertMatches(supabase, allParsed, "playtomic_api");
   errors.push(...bulkResult.errors);
 
-  // 5. Archive full/canceled/empty matches so they don't show on dashboard
-  const archiveIds = archiveParsed
-    .map((p) => p.playtomicId)
-    .filter((id): id is string => id !== null);
+  // 5. Archive full/canceled/empty matches with reason
+  const reasonsByPlaytomicId = new Map<string, string>();
+  for (const entry of archiveEntries) {
+    if (entry.parsed.playtomicId) {
+      reasonsByPlaytomicId.set(entry.parsed.playtomicId, entry.reason);
+    }
+  }
 
-  if (archiveIds.length > 0) {
-    const CHUNK = 500;
-    for (let i = 0; i < archiveIds.length; i += CHUNK) {
+  // Group by reason to batch updates
+  const idsByReason = new Map<string, string[]>();
+  for (const [playtomicId, reason] of reasonsByPlaytomicId) {
+    if (!idsByReason.has(reason)) idsByReason.set(reason, []);
+    idsByReason.get(reason)!.push(playtomicId);
+  }
+
+  const CHUNK = 500;
+  for (const [reason, ids] of idsByReason) {
+    for (let i = 0; i < ids.length; i += CHUNK) {
       await supabase
         .from("matches")
-        .update({ archived_at: now.toISOString() })
-        .in("playtomic_id", archiveIds.slice(i, i + CHUNK));
+        .update({ archived_at: now.toISOString(), archive_reason: reason })
+        .in("playtomic_id", ids.slice(i, i + CHUNK));
     }
   }
 
@@ -95,7 +109,7 @@ export async function pollAndCleanup() {
   if (staleIds.length > 0) {
     const { count: archived } = await supabase
       .from("matches")
-      .update({ archived_at: now.toISOString() })
+      .update({ archived_at: now.toISOString(), archive_reason: "stale" })
       .in("id", staleIds);
     stale = archived ?? 0;
   }
