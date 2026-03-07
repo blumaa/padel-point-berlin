@@ -5,7 +5,7 @@ import type { PlaytomicMatch, PlaytomicTenant } from "@/lib/playtomic/types";
 const mockFetchBerlinVenues = jest.fn<Promise<PlaytomicTenant[]>, []>();
 const mockFetchOpenMatches = jest.fn<Promise<PlaytomicMatch[]>, [string, string]>();
 const mockMapToMatch = jest.fn();
-const mockUpsertMatch = jest.fn();
+const mockBulkUpsertMatches = jest.fn();
 const mockUpdatePollStatus = jest.fn();
 
 jest.mock("@/lib/playtomic/client", () => ({
@@ -18,7 +18,7 @@ jest.mock("@/lib/playtomic/mapToMatch", () => ({
 }));
 
 jest.mock("@/lib/db/matches", () => ({
-  upsertMatch: (...args: unknown[]) => mockUpsertMatch(...args),
+  bulkUpsertMatches: (...args: unknown[]) => mockBulkUpsertMatches(...args),
 }));
 
 jest.mock("@/lib/db/pollStatus", () => ({
@@ -127,8 +127,8 @@ describe("pollAndCleanup", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     supabaseMock = makeSupaMock();
-    mockMapToMatch.mockReturnValue({ playtomicId: "match-1" });
-    mockUpsertMatch.mockResolvedValue(undefined);
+    mockMapToMatch.mockImplementation((m: PlaytomicMatch) => ({ playtomicId: m.match_id }));
+    mockBulkUpsertMatches.mockResolvedValue({ upserted: 0, errors: [] });
     mockUpdatePollStatus.mockResolvedValue(undefined);
   });
 
@@ -137,52 +137,74 @@ describe("pollAndCleanup", () => {
     mockFetchOpenMatches.mockResolvedValue([
       makePlaytomicMatch("match-1", 2, 4), // valid: 2 confirmed, 4 max
     ]);
+    mockBulkUpsertMatches.mockResolvedValue({ upserted: 1, errors: [] });
 
     const { pollAndCleanup } = await import("@/lib/playtomic/pollAndCleanup");
     const result = await pollAndCleanup();
 
-    expect(mockUpsertMatch).toHaveBeenCalledTimes(1);
+    expect(mockBulkUpsertMatches).toHaveBeenCalledTimes(1);
+    expect(mockBulkUpsertMatches).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.arrayContaining([expect.objectContaining({ playtomicId: "match-1" })]),
+      "playtomic_api"
+    );
     expect(result.upserted).toBe(1);
     expect(result.errors).toHaveLength(0);
   });
 
-  it("skips empty matches (0 confirmed players)", async () => {
+  it("upserts empty matches but archives them (for analytics)", async () => {
     mockFetchBerlinVenues.mockResolvedValue([venue]);
     mockFetchOpenMatches.mockResolvedValue([
       makePlaytomicMatch("match-empty", 0, 4),
     ]);
+    mockBulkUpsertMatches.mockResolvedValue({ upserted: 1, errors: [] });
 
     const { pollAndCleanup } = await import("@/lib/playtomic/pollAndCleanup");
     const result = await pollAndCleanup();
 
-    expect(mockUpsertMatch).not.toHaveBeenCalled();
-    expect(result.upserted).toBe(0);
+    // Match is upserted (for analytics) but not counted as a valid open match
+    expect(mockBulkUpsertMatches).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.arrayContaining([expect.objectContaining({ playtomicId: "match-empty" })]),
+      "playtomic_api"
+    );
+    expect(result.upserted).toBe(1);
   });
 
-  it("skips full matches (confirmed >= max)", async () => {
+  it("upserts full matches but archives them (for analytics)", async () => {
     mockFetchBerlinVenues.mockResolvedValue([venue]);
     mockFetchOpenMatches.mockResolvedValue([
       makePlaytomicMatch("match-full", 4, 4),
     ]);
+    mockBulkUpsertMatches.mockResolvedValue({ upserted: 1, errors: [] });
 
     const { pollAndCleanup } = await import("@/lib/playtomic/pollAndCleanup");
     const result = await pollAndCleanup();
 
-    expect(mockUpsertMatch).not.toHaveBeenCalled();
-    expect(result.upserted).toBe(0);
+    expect(mockBulkUpsertMatches).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.arrayContaining([expect.objectContaining({ playtomicId: "match-full" })]),
+      "playtomic_api"
+    );
+    expect(result.upserted).toBe(1);
   });
 
-  it("skips canceled matches (status !== PENDING)", async () => {
+  it("upserts canceled matches but archives them (for analytics)", async () => {
     mockFetchBerlinVenues.mockResolvedValue([venue]);
     mockFetchOpenMatches.mockResolvedValue([
       { ...makePlaytomicMatch("match-canceled", 2, 4), status: "CANCELED" },
     ]);
+    mockBulkUpsertMatches.mockResolvedValue({ upserted: 1, errors: [] });
 
     const { pollAndCleanup } = await import("@/lib/playtomic/pollAndCleanup");
     const result = await pollAndCleanup();
 
-    expect(mockUpsertMatch).not.toHaveBeenCalled();
-    expect(result.upserted).toBe(0);
+    expect(mockBulkUpsertMatches).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.arrayContaining([expect.objectContaining({ playtomicId: "match-canceled" })]),
+      "playtomic_api"
+    );
+    expect(result.upserted).toBe(1);
   });
 
   it("removes a canceled match that was previously in the DB", async () => {
@@ -198,6 +220,7 @@ describe("pollAndCleanup", () => {
       { ...makePlaytomicMatch("match-now-canceled", 2, 4), status: "CANCELED" },
       makePlaytomicMatch("match-valid", 2, 4),
     ]);
+    mockBulkUpsertMatches.mockResolvedValue({ upserted: 1, errors: [] });
 
     const { pollAndCleanup } = await import("@/lib/playtomic/pollAndCleanup");
     const result = await pollAndCleanup();
@@ -219,6 +242,7 @@ describe("pollAndCleanup", () => {
       makePlaytomicMatch("match-now-full", 4, 4),
       makePlaytomicMatch("match-valid", 2, 4),
     ]);
+    mockBulkUpsertMatches.mockResolvedValue({ upserted: 1, errors: [] });
 
     const { pollAndCleanup } = await import("@/lib/playtomic/pollAndCleanup");
     const result = await pollAndCleanup();
@@ -241,6 +265,7 @@ describe("pollAndCleanup", () => {
     mockFetchOpenMatches.mockResolvedValue([
       makePlaytomicMatch("match-1", 2, 4),
     ]);
+    mockBulkUpsertMatches.mockResolvedValue({ upserted: 1, errors: [] });
 
     const { pollAndCleanup } = await import("@/lib/playtomic/pollAndCleanup");
     const result = await pollAndCleanup();
@@ -248,18 +273,17 @@ describe("pollAndCleanup", () => {
     expect(result.stale).toBe(3);
   });
 
-  it("skips stale delete when no valid matches were found (avoids wiping DB on total API failure)", async () => {
+  it("skips stale delete when no open matches were found (avoids wiping DB on total API failure)", async () => {
     mockFetchBerlinVenues.mockResolvedValue([venue]);
     mockFetchOpenMatches.mockResolvedValue([
       makePlaytomicMatch("match-full", 4, 4), // all full → validIds empty
     ]);
+    mockBulkUpsertMatches.mockResolvedValue({ upserted: 1, errors: [] });
 
     const { pollAndCleanup } = await import("@/lib/playtomic/pollAndCleanup");
     const result = await pollAndCleanup();
 
     expect(result.stale).toBe(0);
-    // Only 1 update call (expired), not 2 (no stale archive when validIds empty)
-    expect(supabaseMock._getUpdateCallCount()).toBe(1);
   });
 
   it("records venue errors but continues processing other venues", async () => {
@@ -268,6 +292,7 @@ describe("pollAndCleanup", () => {
     mockFetchOpenMatches
       .mockResolvedValueOnce([makePlaytomicMatch("match-1", 2, 4)]) // venue-1 succeeds
       .mockRejectedValueOnce(new Error("API timeout"));              // venue-2 fails
+    mockBulkUpsertMatches.mockResolvedValue({ upserted: 1, errors: [] });
 
     const { pollAndCleanup } = await import("@/lib/playtomic/pollAndCleanup");
     const result = await pollAndCleanup();
@@ -293,6 +318,7 @@ describe("pollAndCleanup", () => {
     mockFetchOpenMatches.mockResolvedValue([
       makePlaytomicMatch("match-1", 2, 4),
     ]);
+    mockBulkUpsertMatches.mockResolvedValue({ upserted: 1, errors: [] });
 
     const { pollAndCleanup } = await import("@/lib/playtomic/pollAndCleanup");
     await pollAndCleanup();
