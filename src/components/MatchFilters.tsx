@@ -147,11 +147,10 @@ export default function MatchFilters({
     onFilterChange(preset);
   }
 
-  function handleSavePreset() {
-    const trimmed = newName.trim();
-    if (!trimmed) return;
-    if (trimmed in presets) {
-      setPresetError("Name already exists");
+  function handleStartAdding() {
+    setPresetError(null);
+    if (Object.keys(presets).length >= 5) {
+      setPresetError("Max 5 presets. Long-press a preset to delete it.");
       return;
     }
     const filtersJson = JSON.stringify(filters);
@@ -160,8 +159,14 @@ export default function MatchFilters({
       setPresetError(`Same filters as "${duplicate[0]}"`);
       return;
     }
-    if (Object.keys(presets).length >= 5) {
-      setPresetError("Max 5 presets. Long-press a preset to delete it.");
+    setIsAdding(true);
+  }
+
+  function handleSavePreset() {
+    const trimmed = newName.trim();
+    if (!trimmed) return;
+    if (trimmed in presets) {
+      setPresetError("Name already exists");
       return;
     }
     try {
@@ -277,7 +282,7 @@ export default function MatchFilters({
       isOpen={isOpen}
       onClose={onClose}
       title={<span className="klimt-filter-top-buttons-wrapper"><span className="klimt-filter-count">{matchCount} matches</span>{!isAdding && (
-        <button type="button" className="klimt-preset-add" onClick={() => setIsAdding(true)}>+ Save preset</button>
+        <button type="button" className="klimt-preset-add" onClick={handleStartAdding}>+ Save preset</button>
       )}</span>}
       actions={
         <>

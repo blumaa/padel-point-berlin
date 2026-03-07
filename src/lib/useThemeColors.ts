@@ -24,11 +24,14 @@ const DEFAULTS: ThemeColors = {
   surface2: "#27272a",
 };
 
-function readThemeColors(): ThemeColors {
+let cached: ThemeColors | null = null;
+
+function getSnapshot(): ThemeColors {
+  if (cached) return cached;
   if (typeof document === "undefined") return DEFAULTS;
   const style = getComputedStyle(document.documentElement);
   const get = (v: string, fallback: string) => style.getPropertyValue(v).trim() || fallback;
-  return {
+  cached = {
     accent: get("--accent", DEFAULTS.accent),
     match: get("--match", DEFAULTS.match),
     confirmed: get("--confirmed", DEFAULTS.confirmed),
@@ -38,10 +41,10 @@ function readThemeColors(): ThemeColors {
     text: get("--text", DEFAULTS.text),
     surface2: get("--surface2", DEFAULTS.surface2),
   };
+  return cached;
 }
 
 const subscribe = () => () => {};
-const getSnapshot = () => readThemeColors();
 const getServerSnapshot = () => DEFAULTS;
 
 export function useThemeColors(): ThemeColors {
