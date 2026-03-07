@@ -1,4 +1,4 @@
-import { filterMatches, type TimePeriod, type AnalyticsFilterState, DEFAULT_ANALYTICS_FILTERS } from "@/lib/analyticsFilters";
+import { filterMatches, DEFAULT_ANALYTICS_FILTERS } from "@/lib/analyticsFilters";
 import type { Match } from "@/lib/types";
 
 function makeMatch(overrides: Partial<Match> = {}): Match {
@@ -17,6 +17,7 @@ function makeMatch(overrides: Partial<Match> = {}): Match {
     source_group: "playtomic_api",
     playtomic_url: "https://app.playtomic.io/match/abc",
     visibility: "VISIBLE",
+    shared_in_whatsapp: false,
     archive_reason: null,
     created_at: "2026-02-07T10:00:00Z",
     match_players: [],

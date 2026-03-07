@@ -1439,6 +1439,13 @@ body {
   padding-bottom: 0.25rem;
 }
 
+.klimt-filter-top-buttons-wrapper {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+}
+
 .klimt-filter-count {
   font-size: 0.75rem;
   font-weight: 400;
@@ -1513,13 +1520,14 @@ body {
 }
 
 .klimt-preset-add {
-  margin-top: 0.3rem;
   border: none;
   background: none;
   color: var(--accent);
   font-size: 0.8rem;
   cursor: pointer;
-  padding: 0.2rem 0;
+  outline: 1px solid var(--accent);
+  border-radius: 5px;
+  padding: 3 10 3 10;
 }
 
 .klimt-preset-add-row {

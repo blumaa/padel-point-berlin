@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 export interface ThemeColors {
   accent: string;
@@ -24,23 +24,26 @@ const DEFAULTS: ThemeColors = {
   surface2: "#27272a",
 };
 
+function readThemeColors(): ThemeColors {
+  if (typeof document === "undefined") return DEFAULTS;
+  const style = getComputedStyle(document.documentElement);
+  const get = (v: string, fallback: string) => style.getPropertyValue(v).trim() || fallback;
+  return {
+    accent: get("--accent", DEFAULTS.accent),
+    match: get("--match", DEFAULTS.match),
+    confirmed: get("--confirmed", DEFAULTS.confirmed),
+    open: get("--open", DEFAULTS.open),
+    class: get("--class", DEFAULTS.class),
+    textMuted: get("--text-muted", DEFAULTS.textMuted),
+    text: get("--text", DEFAULTS.text),
+    surface2: get("--surface2", DEFAULTS.surface2),
+  };
+}
+
+const subscribe = () => () => {};
+const getSnapshot = () => readThemeColors();
+const getServerSnapshot = () => DEFAULTS;
+
 export function useThemeColors(): ThemeColors {
-  const [colors, setColors] = useState<ThemeColors>(DEFAULTS);
-
-  useEffect(() => {
-    const style = getComputedStyle(document.documentElement);
-    const get = (v: string, fallback: string) => style.getPropertyValue(v).trim() || fallback;
-    setColors({
-      accent: get("--accent", DEFAULTS.accent),
-      match: get("--match", DEFAULTS.match),
-      confirmed: get("--confirmed", DEFAULTS.confirmed),
-      open: get("--open", DEFAULTS.open),
-      class: get("--class", DEFAULTS.class),
-      textMuted: get("--text-muted", DEFAULTS.textMuted),
-      text: get("--text", DEFAULTS.text),
-      surface2: get("--surface2", DEFAULTS.surface2),
-    });
-  }, []);
-
-  return colors;
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
