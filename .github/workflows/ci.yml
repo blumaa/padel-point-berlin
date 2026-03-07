@@ -84,6 +84,12 @@ jobs:
           NEW_VERSION=$(npm version $BUMP --no-git-tag-version)
           echo "New version: $NEW_VERSION"
 
+          # Skip if this version was already tagged (e.g. retry after partial failure)
+          if git rev-parse "$NEW_VERSION" >/dev/null 2>&1; then
+            echo "Tag $NEW_VERSION already exists, skipping"
+            exit 0
+          fi
+
           git add package.json package-lock.json
           git commit -m "chore: bump version to $NEW_VERSION [skip ci]"
           git tag "$NEW_VERSION"
@@ -93,6 +99,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          NEW_VERSION=$(node -p "require('./package.json').version")
+          NEW_VERSION="v$(node -p "require('./package.json').version")"
+          # Skip if release already exists
+          if gh release view "$NEW_VERSION" >/dev/null 2>&1; then
+            echo "Release $NEW_VERSION already exists, skipping"
+            exit 0
+          fi
           MSG=$(git log -2 --pretty=%s | tail -1)
-          gh release create "v$NEW_VERSION" --title "v$NEW_VERSION" --notes "$MSG" --latest
+          gh release create "$NEW_VERSION" --title "$NEW_VERSION" --notes "$MSG" --latest
