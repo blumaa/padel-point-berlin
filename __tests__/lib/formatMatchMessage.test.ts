@@ -17,6 +17,7 @@ function makeMatch(overrides: Partial<Match> = {}): Match {
     source_group: null,
     playtomic_url: "https://app.playtomic.io/match/abc123",
     visibility: "VISIBLE",
+    shared_in_whatsapp: false,
     archive_reason: null,
     created_at: "2026-03-07T10:00:00Z",
     match_players: [

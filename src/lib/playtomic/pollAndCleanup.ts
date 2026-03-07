@@ -99,6 +99,7 @@ export async function pollAndCleanup() {
     .from("matches")
     .select("id, playtomic_id")
     .eq("source_group", "playtomic_api")
+    .eq("shared_in_whatsapp", false)
     .is("archived_at", null)
     .gt("match_time", now.toISOString());
 

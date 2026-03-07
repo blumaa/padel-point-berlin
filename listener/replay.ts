@@ -45,13 +45,13 @@ async function replay() {
     }
 
     try {
-      await upsertMatch(supabase, parsed, msg.id, msg.whatsapp_group_name, msg.community_name);
+      await upsertMatch(supabase, parsed, msg.id, msg.whatsapp_group_name, msg.community_name, true);
       await markProcessed(supabase, msg.id);
       updated++;
       console.log(`  ✓ ${parsed.venue ?? "(no venue)"} · ${parsed.matchTime.toISOString().slice(0, 16)}`);
     } catch (err) {
       failed++;
-      const errMsg = err instanceof Error ? err.message : String(err);
+      const errMsg = err instanceof Error ? err.message : (typeof err === "object" && err !== null && "message" in err) ? (err as { message: string }).message : JSON.stringify(err);
       await markProcessed(supabase, msg.id, errMsg);
       console.error(`  ✗ ${msg.id}: ${errMsg}`);
     }

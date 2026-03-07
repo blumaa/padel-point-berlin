@@ -274,9 +274,9 @@ export default function MatchFilters({
     <Drawer
       isOpen={isOpen}
       onClose={onClose}
-      title={<><span className="klimt-filter-count">{matchCount} matches</span>{!isAdding && (
+      title={<span className="klimt-filter-top-buttons-wrapper"><span className="klimt-filter-count">{matchCount} matches</span>{!isAdding && (
         <button type="button" className="klimt-preset-add" onClick={() => setIsAdding(true)}>+ Save preset</button>
-      )}</>}
+      )}</span>}
       actions={
         <>
           <button

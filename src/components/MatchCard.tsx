@@ -2,30 +2,7 @@
 
 import { memo, useState, useCallback } from "react";
 import { formatMatchMessage } from "@/lib/formatMatchMessage";
-
-interface Player {
-  name: string;
-  level: number | null;
-  status: string;
-  slot_order: number;
-}
-
-interface Match {
-  id: string;
-  title: string;
-  match_type: string;
-  match_time: string;
-  duration_min: number | null;
-  venue: string | null;
-  level_min: number | null;
-  level_max: number | null;
-  category: string;
-  indoor: string | null;
-  competition_mode: string | null;
-  source_group: string | null;
-  playtomic_url: string | null;
-  match_players: Player[];
-}
+import type { Match } from "@/lib/types";
 
 function extractClub(groupName: string | null): string | null {
   if (!groupName) return null;

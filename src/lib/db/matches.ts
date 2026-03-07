@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ParsedMatch } from "@/lib/types";
 import { normalizeVenue } from "@/lib/parser/normalizeVenue";
 
-function toMatchRow(match: ParsedMatch, rawMessageId: string | null, sourceGroup: string, communityName?: string | null) {
+function toMatchRow(match: ParsedMatch, rawMessageId: string | null, sourceGroup: string, communityName?: string | null, sharedInWhatsapp = false) {
   return {
     playtomic_id: match.playtomicId,
     raw_message_id: rawMessageId,
@@ -19,6 +19,7 @@ function toMatchRow(match: ParsedMatch, rawMessageId: string | null, sourceGroup
     indoor: match.indoor ?? null,
     competition_mode: match.competitionMode ?? null,
     visibility: match.visibility ?? "VISIBLE",
+    shared_in_whatsapp: sharedInWhatsapp,
   };
 }
 
@@ -43,8 +44,18 @@ export async function bulkUpsertMatches(
   const errors: string[] = [];
   const allMatchIds: string[] = [];
 
+  // Preserve shared_in_whatsapp flag for matches already marked as shared
+  const { data: sharedRows } = await supabase
+    .from("matches")
+    .select("playtomic_id")
+    .eq("shared_in_whatsapp", true);
+  const sharedIds = new Set((sharedRows ?? []).map((r: { playtomic_id: string }) => r.playtomic_id));
+
   // 1. Bulk upsert match rows in chunks
-  const rows = matches.map((m) => toMatchRow(m, null, sourceGroup));
+  const rows = matches.map((m) => ({
+    ...toMatchRow(m, null, sourceGroup),
+    shared_in_whatsapp: sharedIds.has(m.playtomicId!) || false,
+  }));
 
   for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
     const chunk = rows.slice(i, i + CHUNK_SIZE);
@@ -109,36 +120,63 @@ export async function upsertMatch(
   match: ParsedMatch,
   rawMessageId: string | null,
   sourceGroup: string,
-  communityName?: string | null
+  communityName?: string | null,
+  sharedInWhatsapp = false
 ) {
+  // WhatsApp path: if match already exists (from API), keep API metadata
+  // but update players (more real-time) and set the shared flag.
+  if (sharedInWhatsapp && match.playtomicId) {
+    const { data: existing } = await supabase
+      .from("matches")
+      .select("id")
+      .eq("playtomic_id", match.playtomicId)
+      .maybeSingle();
+
+    if (existing) {
+      const matchId = existing.id as string;
+
+      const { error: flagError } = await supabase
+        .from("matches")
+        .update({
+          shared_in_whatsapp: true,
+          archived_at: null,
+          archive_reason: null,
+          raw_message_id: rawMessageId,
+        })
+        .eq("id", matchId);
+
+      if (flagError) throw flagError;
+
+      await replacePlayers(supabase, matchId, match.players);
+      return matchId;
+    }
+  }
+
+  // Match doesn't exist yet — full upsert
+  const row = toMatchRow(match, rawMessageId, sourceGroup, communityName, sharedInWhatsapp);
+
+  if (sharedInWhatsapp) {
+    Object.assign(row, { archived_at: null, archive_reason: null });
+  }
+
   const { data, error } = await supabase
     .from("matches")
-    .upsert(
-      {
-        playtomic_id: match.playtomicId,
-        raw_message_id: rawMessageId,
-        title: match.title,
-        match_type: match.matchType,
-        match_time: match.matchTime.toISOString(),
-        duration_min: match.durationMin,
-        venue: normalizeVenue(match.venue) ?? normalizeVenue(communityName ?? null) ?? null,
-        level_min: match.levelMin,
-        level_max: match.levelMax,
-        category: match.category,
-        source_group: sourceGroup,
-        playtomic_url: match.playtomicUrl,
-        indoor: match.indoor ?? null,
-        competition_mode: match.competitionMode ?? null,
-        visibility: match.visibility ?? "VISIBLE",
-      },
-      { onConflict: "playtomic_id" }
-    )
+    .upsert(row, { onConflict: "playtomic_id" })
     .select("id")
     .single();
 
   if (error) throw error;
   const matchId = data.id as string;
 
+  await replacePlayers(supabase, matchId, match.players);
+  return matchId;
+}
+
+async function replacePlayers(
+  supabase: SupabaseClient,
+  matchId: string,
+  players: ParsedMatch["players"]
+) {
   const { error: deleteError } = await supabase
     .from("match_players")
     .delete()
@@ -146,10 +184,9 @@ export async function upsertMatch(
 
   if (deleteError) throw deleteError;
 
-  if (match.players.length > 0) {
-    // Deduplicate by slot_order before inserting (guards against replayed messages)
+  if (players.length > 0) {
     const seen = new Set<number>();
-    const uniquePlayers = match.players.filter((p) => {
+    const uniquePlayers = players.filter((p) => {
       if (seen.has(p.slotOrder)) return false;
       seen.add(p.slotOrder);
       return true;
@@ -169,8 +206,6 @@ export async function upsertMatch(
 
     if (playersError) throw playersError;
   }
-
-  return matchId;
 }
 
 const TIME_SLOTS = {
@@ -198,7 +233,7 @@ export async function getUpcomingMatches(
     .from("matches")
     .select("*, match_players(*)")
     .is("archived_at", null)
-    .or("visibility.is.null,visibility.neq.HIDDEN")
+    .or("visibility.is.null,visibility.neq.HIDDEN,shared_in_whatsapp.eq.true")
     .gte("match_time", new Date().toISOString())
     .order("match_time", { ascending: true })
     .limit(5000);

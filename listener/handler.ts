@@ -22,11 +22,13 @@ export async function handleMessage(
 ): Promise<void> {
   // Only process messages with playtomic links
   if (!message.body.includes("playtomic.io")) {
+    console.log("[handler] skipped: no playtomic.io link");
     return;
   }
 
   // Skip class messages — they are not matches
   if (message.body.includes("app.playtomic.io/lesson_class/")) {
+    console.log("[handler] skipped: lesson_class link");
     return;
   }
 
@@ -38,7 +40,7 @@ export async function handleMessage(
       .select("id", { count: "exact", head: true })
       .eq("whatsapp_group_name", message.groupName)
       .eq("message_timestamp", ts);
-    if ((count ?? 0) > 0) return;
+    if ((count ?? 0) > 0) { console.log("[handler] skipped: duplicate timestamp"); return; }
   }
 
   // Store raw message
@@ -56,18 +58,26 @@ export async function handleMessage(
   const parsed = parseMessage(message.body);
 
   if (!parsed) {
+    console.log("[handler] skipped: could not parse");
     await markProcessed(supabase, rawId, "Could not parse message");
+    return;
+  }
+
+  if (!parsed.playtomicId) {
+    console.log("[handler] skipped: no playtomic_id");
+    await markProcessed(supabase, rawId, "No playtomic_id extracted");
     return;
   }
 
   const effectiveVenue = parsed.venue ?? normalizeVenue(message.communityName ?? null);
   if (!effectiveVenue) {
+    console.log("[handler] skipped: no venue");
     await markProcessed(supabase, rawId, "No venue could be determined");
     return;
   }
 
   try {
-    await upsertMatch(supabase, parsed, rawId, message.groupName, message.communityName);
+    await upsertMatch(supabase, parsed, rawId, message.groupName, message.communityName, true);
     await markProcessed(supabase, rawId);
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err);
