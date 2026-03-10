@@ -1,0 +1,88 @@
+name: Poll Playtomic
+
+on:
+  schedule:
+    - cron: "0 8 * * *"   # Morning — 8:00 UTC
+    - cron: "0 18 * * *"  # Evening — 18:00 UTC
+  workflow_dispatch:
+    inputs:
+      endpoint:
+        description: "Which endpoint to trigger"
+        required: true
+        default: "morning"
+        type: choice
+        options:
+          - morning
+          - evening
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    env:
+      BASE_URL: https://padel-point-berlin.vercel.app
+    steps:
+      - name: Determine endpoint
+        id: endpoint
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "path=${{ inputs.endpoint }}" >> "$GITHUB_OUTPUT"
+          else
+            HOUR=$(date -u +%H)
+            if [ "$HOUR" -lt 12 ]; then
+              echo "path=morning" >> "$GITHUB_OUTPUT"
+            else
+              echo "path=evening" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
+      - name: Call poll endpoint
+        id: poll
+        run: |
+          RESPONSE=$(curl -sf --max-time 180 -w "\n%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "$BASE_URL/api/poll-playtomic/${{ steps.endpoint.outputs.path }}")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          echo "status=$HTTP_CODE" >> "$GITHUB_OUTPUT"
+          echo "body=$BODY" >> "$GITHUB_OUTPUT"
+          echo "### Poll Result" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Endpoint:** ${{ steps.endpoint.outputs.path }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Status:** $HTTP_CODE" >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          echo "$BODY" | jq . 2>/dev/null || echo "$BODY" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$HTTP_CODE" -ne 200 ]; then
+            echo "::error::Endpoint returned HTTP $HTTP_CODE"
+            exit 1
+          fi
+
+          ERRORS=$(echo "$BODY" | jq -r '.errors | length' 2>/dev/null || echo "0")
+          if [ "$ERRORS" -gt 0 ]; then
+            echo "::warning::Response contained $ERRORS errors"
+          fi
+
+      - name: Alert on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `Cron failure: poll-playtomic/${{ steps.endpoint.outputs.path }}`;
+            const body = [
+              `**Workflow:** ${context.workflow}`,
+              `**Run:** ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              `**Endpoint:** ${{ steps.endpoint.outputs.path }}`,
+              `**HTTP Status:** ${{ steps.poll.outputs.status || 'N/A' }}`,
+              `**Response:** \`${{ steps.poll.outputs.body || 'No response' }}\``,
+              `**Time:** ${new Date().toISOString()}`,
+            ].join('\n');
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body,
+              labels: ['cron-failure'],
+            });

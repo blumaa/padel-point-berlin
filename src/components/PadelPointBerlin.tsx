@@ -101,22 +101,6 @@ export function PadelPointBerlin() {
       xmlns="http://www.w3.org/2000/svg"
       style={{ width: "100%", height: "100%", display: "block", overflow: "visible" }}
     >
-      <defs>
-        <filter id="ppb-shadow" x="-10%" y="-15%" width="130%" height="150%">
-          <feFlood floodOpacity="0.498039" floodColor="rgb(0,0,0)" result="flood" />
-          <feGaussianBlur stdDeviation="3" in="SourceGraphic" result="blur" />
-          <feOffset dx="6" dy="6" in="blur" result="offset" />
-          <feComposite operator="in" in="flood" in2="offset" result="comp1" />
-          <feComposite operator="over" in="SourceGraphic" in2="comp1" />
-        </filter>
-        <clipPath id="ppb-circle-clip">
-          <circle cx="200" cy="200" r="250" />
-        </clipPath>
-        <filter id="ppb-outer-shadow" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="16" stdDeviation="22" floodColor="rgb(0,0,0)" floodOpacity="0.7" />
-        </filter>
-      </defs>
-
       <circle cx="200" cy="200" r="250" fill="var(--surface)" filter="url(#ppb-outer-shadow)" />
 
       <g clipPath="url(#ppb-circle-clip)">
