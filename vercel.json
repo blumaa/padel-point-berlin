@@ -1,6 +1,1 @@
-{
-  "crons": [
-    { "path": "/api/poll-playtomic/morning", "schedule": "0 8 * * *" },
-    { "path": "/api/poll-playtomic/evening", "schedule": "0 18 * * *" }
-  ]
-}
+{}
