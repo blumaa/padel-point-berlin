@@ -23,9 +23,6 @@ jobs:
     env:
       BASE_URL: https://padel-point-berlin.vercel.app
     steps:
-      - name: Force failure for notification test
-        run: exit 1
-
       - name: Determine endpoint
         id: endpoint
         run: |
