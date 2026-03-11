@@ -2,8 +2,9 @@ name: Poll Playtomic
 
 on:
   schedule:
-    - cron: "0 8 * * *"   # Morning — 8:00 UTC
-    - cron: "0 18 * * *"  # Evening — 18:00 UTC
+    - cron: "0 7 * * *"    # Morning — 9:00 Berlin (CEST)
+    - cron: "30 10 * * *"  # Midday  — 12:30 Berlin (CEST)
+    - cron: "0 17 * * *"   # Evening — 19:00 Berlin (CEST)
   workflow_dispatch:
     inputs:
       endpoint:
@@ -13,6 +14,7 @@ on:
         type: choice
         options:
           - morning
+          - midday
           - evening
 
 jobs:
@@ -28,8 +30,12 @@ jobs:
             echo "path=${{ inputs.endpoint }}" >> "$GITHUB_OUTPUT"
           else
             HOUR=$(date -u +%H)
-            if [ "$HOUR" -lt 12 ]; then
+            MIN=$(date -u +%M)
+            TIME_VAL=$((HOUR * 60 + MIN))
+            if [ "$TIME_VAL" -lt 540 ]; then
               echo "path=morning" >> "$GITHUB_OUTPUT"
+            elif [ "$TIME_VAL" -lt 840 ]; then
+              echo "path=midday" >> "$GITHUB_OUTPUT"
             else
               echo "path=evening" >> "$GITHUB_OUTPUT"
             fi

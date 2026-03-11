@@ -99,9 +99,13 @@ export function PadelPointBerlin() {
       ref={svgRef}
       viewBox="-60 -60 520 520"
       xmlns="http://www.w3.org/2000/svg"
-      style={{ width: "100%", height: "100%", display: "block", overflow: "visible" }}
+      style={{ width: "100%", height: "100%", display: "block" }}
     >
-      <circle cx="200" cy="200" r="250" fill="var(--surface)" filter="url(#ppb-outer-shadow)" />
+      <defs>
+        <clipPath id="ppb-circle-clip">
+          <circle cx="200" cy="200" r="250" />
+        </clipPath>
+      </defs>
 
       <g clipPath="url(#ppb-circle-clip)">
         <rect id="ppb-bg" fill="var(--surface)" x="-60" y="-60" width="520" height="520" />
