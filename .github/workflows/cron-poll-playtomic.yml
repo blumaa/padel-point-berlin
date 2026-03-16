@@ -17,6 +17,9 @@ on:
           - midday
           - evening
 
+permissions:
+  issues: write
+
 jobs:
   poll:
     runs-on: ubuntu-latest
@@ -29,8 +32,8 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "path=${{ inputs.endpoint }}" >> "$GITHUB_OUTPUT"
           else
-            HOUR=$(date -u +%H)
-            MIN=$(date -u +%M)
+            HOUR=$(date -u +%-H)
+            MIN=$(date -u +%-M)
             TIME_VAL=$((HOUR * 60 + MIN))
             if [ "$TIME_VAL" -lt 540 ]; then
               echo "path=morning" >> "$GITHUB_OUTPUT"
