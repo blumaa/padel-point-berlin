@@ -2,7 +2,12 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy – PadelPoint Berlin",
+  title: "Privacy Policy",
+  description:
+    "PadelPoint Berlin privacy policy — how we handle match data, GDPR compliance, and your rights.",
+  alternates: {
+    canonical: "/privacy",
+  },
 };
 
 export default function PrivacyPage() {

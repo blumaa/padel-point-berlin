@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /stage
+Disallow: /~offline
+
+Sitemap: https://padel-point-berlin.vercel.app/sitemap.xml
