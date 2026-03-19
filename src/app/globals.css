@@ -1584,7 +1584,7 @@ body {
 
 /* ===== Analytics page ===== */
 .klimt-analytics {
-  max-width: 600px;
+  max-width: 720px;
   margin: 0 auto;
   padding: 1rem;
 }
@@ -1602,6 +1602,12 @@ body {
   margin: 0 0 1rem;
 }
 
+.klimt-analytics-scope {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0 0 0.75rem;
+}
+
 .klimt-stat-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -1614,6 +1620,31 @@ body {
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--text);
+  margin: 0 0 0.25rem;
+}
+
+.klimt-stat-heading--toggle {
+  cursor: pointer;
+  list-style: none;
+}
+
+.klimt-stat-heading--toggle::marker,
+.klimt-stat-heading--toggle::-webkit-details-marker {
+  display: none;
+}
+
+.klimt-stat-heading--toggle::before {
+  content: "▸ ";
+  color: var(--text-muted);
+}
+
+details[open] > .klimt-stat-heading--toggle::before {
+  content: "▾ ";
+}
+
+.klimt-stat-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
   margin: 0 0 0.75rem;
 }
 
@@ -1626,7 +1657,6 @@ body {
 }
 
 .klimt-bar-label {
-  min-width: 80px;
   color: var(--text-muted);
   flex-shrink: 0;
   overflow: hidden;
@@ -1736,16 +1766,88 @@ body {
   gap: 0.5rem;
 }
 
-.klimt-analytics-venue-row {
-  display: flex;
-  gap: 0.4rem;
-  overflow-x: auto;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+.klimt-pill--toggle {
+  margin-left: auto;
 }
 
-.klimt-analytics-venue-row::-webkit-scrollbar {
-  display: none;
+.klimt-pill--has-filters {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.klimt-filters-expanded {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  max-height: 60vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+@media (min-width: 768px) {
+  .klimt-filters-expanded {
+    max-width: 480px;
+    left: auto;
+    right: 0;
+  }
+}
+
+.klimt-filters-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9;
+}
+
+.klimt-filter-group--venues .klimt-filter-pills {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.klimt-filter-group--venues .klimt-pill {
+  flex-shrink: 0;
+}
+
+.klimt-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+@media (min-width: 768px) {
+  .klimt-filter-group {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+}
+
+.klimt-filter-group-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .klimt-filter-group-label {
+    min-width: 60px;
+  }
+}
+
+.klimt-filter-pills {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
 }
 
 .klimt-analytics-context {
@@ -1784,11 +1886,187 @@ body {
   font-weight: 500;
 }
 
+.klimt-heatmap-header {
+  text-align: center;
+  padding: 0.3rem;
+}
+
+.klimt-heatmap-header-label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.klimt-heatmap-header-sub {
+  display: block;
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
 .klimt-heatmap-cell {
   padding: 0.3rem;
   text-align: center;
   color: var(--text);
   border-radius: 3px;
+}
+
+.klimt-heatmap-peak {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 0.5rem 0 0;
+}
+
+/* Venue Scorecard */
+.klimt-venue-table {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+  font-size: 0.8rem;
+}
+
+.klimt-venue-header {
+  display: table-row;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.klimt-venue-header > span {
+  display: table-cell;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.klimt-venue-row {
+  display: table-row;
+}
+
+.klimt-venue-row > span {
+  display: table-cell;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 40%, transparent);
+  vertical-align: middle;
+}
+
+.klimt-venue-row:last-child > span {
+  border-bottom: none;
+}
+
+.klimt-venue-col--name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+.klimt-venue-col--stat {
+  width: 70px;
+  text-align: right;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.klimt-venue-header .klimt-venue-col--stat {
+  color: var(--text-muted);
+}
+
+.klimt-venue-rank {
+  display: inline-block;
+  width: 1.5em;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+}
+
+.klimt-venue-toggle {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+}
+
+/* KPI cards */
+.klimt-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 500px) {
+  .klimt-kpi-row {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+  .klimt-kpi-card {
+    padding: 0.6rem 0.4rem;
+  }
+  .klimt-kpi-value {
+    font-size: 1.1rem;
+  }
+  .klimt-kpi-label {
+    font-size: 0.65rem;
+  }
+  .klimt-kpi-subtitle {
+    font-size: 0.55rem;
+  }
+  .klimt-venue-col--stat {
+    width: 55px;
+    font-size: 0.7rem;
+  }
+  .klimt-venue-col--name {
+    font-size: 0.75rem;
+  }
+}
+
+.klimt-kpi-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.klimt-kpi-card--loading {
+  height: 80px;
+  animation: klimt-pulse 1.5s ease-in-out infinite;
+}
+
+.klimt-kpi-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1.2;
+}
+
+.klimt-kpi-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+.klimt-kpi-subtitle {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  opacity: 0.7;
+  margin-top: 0.15rem;
+}
+
+/* Skeleton loading */
+.klimt-skeleton .klimt-stat-card--loading {
+  height: 120px;
+  animation: klimt-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes klimt-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+}
+
+/* Dim on refetch */
+.klimt-analytics--refetching {
+  opacity: 0.5;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
 }
 
 /* ===== Focus-visible ring (keyboard navigation) ===== */

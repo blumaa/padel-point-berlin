@@ -22,7 +22,7 @@ function stripPrefix(raw: string): string {
 const VENUE_ALIASES: Array<{ pattern: RegExp; canonical: string }> = [
   { pattern: /charlotte|charlottenburg/i,              canonical: "Mitte Charlotte" },
   { pattern: /4\s*padel|we\s+are\s+padel/i,           canonical: "4PADEL Berlin" },
-  { pattern: /pbc/i,                                   canonical: "PBC Center" },
+  { pattern: /pbc|pscb|social\s*club/i,                  canonical: "PBC Center" },
   { pattern: /t[ií]o\s*t[ií]o/i,                       canonical: "Tio Tio" },
   { pattern: /padel\s*fc|padelhaus/i,                  canonical: "Padelhaus GmbH" },
   { pattern: /padel\s*city/i,                          canonical: "PadelCity Berlin" },
