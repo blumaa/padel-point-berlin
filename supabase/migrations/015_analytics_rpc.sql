@@ -37,6 +37,7 @@ BEGIN
       m.created_at
     FROM matches m
     WHERE m.match_time >= v_cutoff
+      AND m.match_time <= now()
       AND (cardinality(p_venues) = 0 OR m.venue = ANY(p_venues))
       AND (cardinality(p_outcomes) = 0 OR COALESCE(m.archive_reason, 'pending') = ANY(p_outcomes))
       AND (cardinality(p_categories) = 0 OR m.category = ANY(p_categories))

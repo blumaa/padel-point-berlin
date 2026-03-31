@@ -271,7 +271,7 @@ export default function Dashboard() {
               disabled={isLoading || selectedDates.length === 0}
               className="klimt-btn-clear"
             >
-              Clear
+              Clear it all
             </button>
           </div>
           <div className="klimt-sort-controls">
