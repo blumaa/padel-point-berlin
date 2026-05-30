@@ -25,6 +25,12 @@ beforeEach(() => {
         json: () => Promise.resolve(["Padel FC Berlin", "Urban Padel"]),
       });
     }
+    if (url.includes("/api/analytics/venue-trend")) {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve([]),
+      });
+    }
     return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
   });
 });

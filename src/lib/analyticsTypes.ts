@@ -6,7 +6,9 @@ export interface WeekCount { week: string; count: number }
 export interface OutcomeMonth { month: string; filled: number; canceled: number; empty: number; expired: number; stale: number; pending: number }
 export interface OutcomeSummary { reason: string; count: number }
 export interface LeadTimeRow { venue: string; avgDays: number }
+export interface VenueTrendRow { bucket: string; venue: string; count: number }
 
+export type TrendGranularity = "day" | "week" | "month" | "year";
 export type TimePeriod = "30d" | "90d" | "6m" | "1y" | "all";
 export type OutcomeFilter = "filled" | "canceled" | "pending" | "expired" | "empty";
 

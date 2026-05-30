@@ -7,6 +7,7 @@ import { KPIRow } from "./KPIRow";
 import { BarChart } from "./BarChart";
 import { HeatmapChart } from "./HeatmapChart";
 import { VenueScorecard } from "./VenueScorecard";
+import { VenueTrendChart } from "./VenueTrendChart";
 import { StatSection } from "./StatSection";
 import { AnalyticsFilterBar } from "./AnalyticsFilterBar";
 import { friendlyBucket, friendlyMonth } from "@/lib/formatters";
@@ -99,10 +100,18 @@ export function AnalyticsDashboard() {
 
       <AnalyticsFilterBar filters={filters} venues={venues} onFiltersChange={setFilters} />
 
-      {/* 1. KPIs */}
+      {/* 1. Club Activity Trend — games per club over time */}
+      <StatSection
+        heading="Club Activity Trend"
+        subtitle="Games per club over time"
+      >
+        <VenueTrendChart filters={filters} />
+      </StatSection>
+
+      {/* 2. KPIs */}
       <KPIRow data={data} />
 
-      {/* 2. Best Times to Play — most actionable chart first */}
+      {/* 3. Best Times to Play */}
       {data.peakMatchTimes.length > 0 && (
         <StatSection
           heading="Best Times to Play"
@@ -126,7 +135,7 @@ export function AnalyticsDashboard() {
         </StatSection>
       )}
 
-      {/* 4. Community Growth — activity trend */}
+      {/* 6. Community Growth — activity trend */}
       {data.matchesPerWeek.length > 0 && (
         <StatSection
           heading="Community Growth"

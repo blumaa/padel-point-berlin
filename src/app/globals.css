@@ -1752,6 +1752,132 @@ details[open] > .klimt-stat-heading--toggle::before {
 .klimt-legend-swatch--friendly { background: var(--confirmed); }
 .klimt-legend-swatch--competitive { background: var(--class); }
 
+/* Venue trend chart */
+.klimt-trend-toggle {
+  display: flex;
+  gap: 0.3rem;
+  margin-bottom: 0.75rem;
+}
+
+.klimt-pill--sm {
+  padding: 3px 10px;
+  font-size: 0.7rem;
+}
+
+.klimt-trend-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.klimt-trend-grid {
+  stroke: var(--border);
+  stroke-width: 0.5;
+  stroke-dasharray: 3 3;
+}
+
+.klimt-trend-ylabel {
+  font-size: 9px;
+  fill: var(--text-muted);
+  text-anchor: end;
+  dominant-baseline: middle;
+}
+
+.klimt-trend-xlabel {
+  font-size: 9px;
+  fill: var(--text-muted);
+  text-anchor: middle;
+}
+
+.klimt-trend-empty {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.klimt-trend--loading {
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+
+.klimt-trend-legend {
+  flex-wrap: wrap;
+}
+
+.klimt-legend-item {
+  cursor: pointer;
+  user-select: none;
+}
+
+.klimt-legend-item--hidden {
+  opacity: 0.35;
+}
+
+.klimt-pill--xs {
+  padding: 2px 8px;
+  font-size: 0.65rem;
+}
+
+.klimt-trend-legend-controls {
+  display: flex;
+  gap: 0.25rem;
+  margin-right: 0.25rem;
+}
+
+.klimt-pill--disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.klimt-trend-crosshair {
+  stroke: var(--text-muted);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+  pointer-events: none;
+}
+
+.klimt-trend-tooltip {
+  position: absolute;
+  top: 2rem;
+  transform: translateX(-50%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.75rem;
+  pointer-events: none;
+  z-index: 5;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.klimt-trend-tooltip-header {
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.25rem;
+  font-size: 0.7rem;
+}
+
+.klimt-trend-tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 1px 0;
+}
+
+.klimt-trend-tooltip-venue {
+  color: var(--text-muted);
+  flex: 1;
+}
+
+.klimt-trend-tooltip-value {
+  font-weight: 600;
+  color: var(--text);
+  min-width: 1.5rem;
+  text-align: right;
+}
+
 /* Analytics filters */
 .klimt-analytics-filters {
   position: sticky;
